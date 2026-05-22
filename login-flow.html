@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Login Flow — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* ── Wiom tokens ───────────────────────────────────────────────── */
+  :root {
+    --brand-primary: #D9008D;
+    --brand-primary-dim: #B8007A;
+    --bg-screen: #F4F4F4;
+    --bg-surface: #FFFFFF;
+    --bg-info-subtle: #E6F1FB;
+    --bg-positive-subtle: #E6F5EC;
+    --bg-brand-subtle: rgba(217,0,141,0.08);
+    --state-info: #1B7FD3;
+    --state-positive: #1E9B4A;
+    --text-primary: #141414;
+    --text-secondary: #5C5C5C;
+    --text-hint: #9A9A9A;
+    --text-disabled: #BABABA;
+    --stroke-primary: #E4E4E4;
+    --stroke-focus: #D9008D;
+    --radius-card: 12px;
+    --radius-cta: 16px;
+    --radius-dialog: 24px;
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 12px;
+    --space-lg: 16px;
+    --space-xl: 24px;
+    --shadow-card: 0 1px 2px rgba(0,0,0,0.04), 0 0 1px rgba(0,0,0,0.06);
+    --shadow-cta-bar: 0 -2px 8px rgba(0,0,0,0.06);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: 'Hind', 'Inter', system-ui, sans-serif;
+    background: linear-gradient(135deg, #2a2a2a, #0a0a0a);
+    color: var(--text-primary);
+    display: grid;
+    place-items: start center;
+    padding: 32px 16px 48px;
+    min-height: 100vh;
+  }
+
+  /* Stage header */
+  .stage { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .stage h1 {
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 18px;
+    margin: 0;
+  }
+  .stage .subtitle {
+    color: rgba(255,255,255,0.55);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    text-align: center;
+    max-width: 440px;
+    line-height: 1.5;
+  }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
+  .controls button {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.16);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+  }
+  .controls button:hover { background: rgba(255,255,255,0.14); }
+  .controls button.active { background: var(--brand-primary); border-color: var(--brand-primary); }
+  .step-label {
+    color: rgba(255,255,255,0.55);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+  }
+  .step-label b { color: #fff; font-weight: 600; }
+
+  /* Device frame */
+  .device {
+    width: 392px;
+    height: 802px;
+    background: #000;
+    border-radius: 44px;
+    padding: 10px;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.5), 0 0 0 2px rgba(255,255,255,0.04) inset;
+    position: relative;
+  }
+  .screen {
+    width: 100%;
+    height: 100%;
+    background: var(--bg-surface);
+    border-radius: 34px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Status bar */
+  .status-bar {
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 22px 0;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-primary);
+    flex-shrink: 0;
+  }
+  .status-bar .right { display: flex; gap: 5px; align-items: center; }
+  .status-bar svg { width: 14px; height: 14px; }
+
+  /* Page container */
+  .page {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-surface);
+    position: absolute;
+    inset: 28px 0 0;
+    transform: translateX(100%);
+    transition: transform .35s cubic-bezier(.22,1,.36,1);
+  }
+  .page.active { transform: translateX(0); z-index: 2; }
+  .page.left { transform: translateX(-100%); }
+
+  /* Top bar (only on OTP / success — login has no back-arrow) */
+  .topbar {
+    height: 56px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .topbar .back {
+    width: 24px; height: 24px;
+    color: var(--text-primary);
+    cursor: pointer;
+  }
+
+  /* Body (centered content) */
+  .body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 24px 16px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* CSP infinity logo — uses the same PNG asset baked into the app
+     (res/drawable/csp_logo.png), clipped with the same 16dp rounded
+     corner mask the Compose Image uses. */
+  .csp-logo {
+    width: 88px;
+    height: 88px;
+    border-radius: 16px;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    margin: 24px auto 12px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.10);
+  }
+  .csp-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* App title */
+  .app-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-align: center;
+    margin: 6px 0 4px;
+    letter-spacing: 0.2px;
+  }
+  .app-subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+    text-align: center;
+    margin: 0 0 32px;
+    line-height: 1.5;
+  }
+
+  /* Field */
+  .field-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+  }
+  .input-row {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--stroke-primary);
+    border-radius: var(--radius-card);
+    background: var(--bg-surface);
+    transition: border-color .15s, background .15s;
+    overflow: hidden;
+  }
+  .input-row:focus-within {
+    border-color: var(--stroke-focus);
+    background: rgba(217,0,141,0.02);
+  }
+  .input-row .prefix {
+    padding: 0 14px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    border-right: 1px solid var(--stroke-primary);
+    display: grid;
+    place-items: center;
+    height: 48px;
+    background: var(--bg-screen);
+  }
+  .input-row input {
+    flex: 1;
+    height: 48px;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 16px;
+    color: var(--text-primary);
+    padding: 0 14px;
+    letter-spacing: 0.5px;
+  }
+  .input-row input::placeholder { color: var(--text-hint); }
+
+  .field-hint {
+    font-size: 12px;
+    color: var(--text-hint);
+    margin-top: 8px;
+    line-height: 1.4;
+  }
+
+  .terms {
+    margin-top: 28px;
+    font-size: 12px;
+    color: var(--text-hint);
+    text-align: center;
+    line-height: 1.55;
+  }
+  .terms a { color: var(--brand-primary); font-weight: 600; text-decoration: none; }
+
+  /* CTA bar */
+  .cta-bar {
+    padding: 14px 16px 22px;
+    background: var(--bg-surface);
+    border-top: 1px solid transparent;
+    flex-shrink: 0;
+  }
+  button.cta-primary {
+    width: 100%;
+    height: 48px;
+    background: var(--brand-primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-cta);
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  button.cta-primary:hover:not(:disabled) { background: var(--brand-primary-dim); }
+  button.cta-primary:disabled {
+    background: #EBEBEB;
+    color: var(--text-disabled);
+    cursor: not-allowed;
+  }
+
+  /* OTP boxes */
+  .otp-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 8px 0 20px;
+  }
+  .otp-row input {
+    width: 44px;
+    height: 56px;
+    border: 1px solid var(--stroke-primary);
+    border-radius: var(--radius-card);
+    text-align: center;
+    font-family: inherit;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    background: var(--bg-surface);
+    outline: none;
+    transition: border-color .15s, background .15s;
+  }
+  .otp-row input:focus {
+    border-color: var(--stroke-focus);
+    background: rgba(217,0,141,0.04);
+  }
+  .otp-row input.filled {
+    border-color: var(--brand-primary);
+  }
+  .otp-row.shake {
+    animation: shake .35s ease;
+  }
+  @keyframes shake {
+    10%, 90% { transform: translateX(-1px); }
+    20%, 80% { transform: translateX(2px); }
+    30%, 50%, 70% { transform: translateX(-4px); }
+    40%, 60% { transform: translateX(4px); }
+  }
+
+  .resend-row {
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+  .resend-link {
+    color: var(--brand-primary);
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .resend-link.disabled {
+    color: var(--text-hint);
+    cursor: not-allowed;
+    font-weight: 500;
+  }
+
+  /* Success screen */
+  .success-tick {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    background: var(--bg-positive-subtle);
+    display: grid;
+    place-items: center;
+    margin: 56px auto 18px;
+  }
+  .success-tick svg { width: 44px; height: 44px; color: var(--state-positive); }
+
+  .next-card {
+    margin: 24px 0 12px;
+    background: var(--bg-info-subtle);
+    border-radius: var(--radius-card);
+    padding: 14px;
+    font-size: 13px;
+    color: var(--text-primary);
+    line-height: 1.5;
+  }
+  .next-card b { color: var(--state-info); }
+
+  /* Demo autofill button (floating) */
+  .pill {
+    position: absolute;
+    top: 36px;
+    right: 16px;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    z-index: 20;
+    cursor: pointer;
+  }
+  .pill.left { left: 16px; right: auto; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <h1>Login Flow · प्रोटोटाइप</h1>
+  <div class="subtitle">CSP infinity logo · mobile number → OTP → permission handoff. Type a 10-digit number to enable the OTP CTA, or tap the demo-fill pill to skip ahead.</div>
+
+  <div class="controls">
+    <button data-jump="login">1 · नंबर डालें</button>
+    <button data-jump="otp">2 · OTP डालें</button>
+    <button data-jump="done">3 · वेरीफाई · हो गया</button>
+  </div>
+  <div class="step-label">Current step: <b id="stepLabel">1 · नंबर डालें</b></div>
+
+  <div class="device">
+    <div class="screen">
+      <!-- Status bar (always visible) -->
+      <div class="status-bar">
+        <span>9:41</span>
+        <div class="right">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 11h2v3H1zM5 8h2v6H5zM9 5h2v9H9zM13 2h2v12h-2z"/></svg>
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 12.5a1 1 0 100 2 1 1 0 000-2zm3.18-2.71L8 12.97l-3.18-3.18A4.49 4.49 0 018 8.5c1.2 0 2.31.47 3.18 1.29zm2.83-2.83L8 1.66 1.99 6.96a8.49 8.49 0 0112.02 0z"/></svg>
+          <svg viewBox="0 0 24 12" fill="currentColor"><rect x="1" y="1" width="20" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.2"/><rect x="22" y="4" width="1.5" height="4" rx=".5"/><rect x="3" y="3" width="14" height="6" rx="1"/></svg>
+        </div>
+      </div>
+
+      <button class="pill" id="autofill">⚡ Demo fill</button>
+
+      <!-- ── PAGE 1: Login ── -->
+      <div class="page active" id="page-login">
+        <div class="body">
+          <div class="csp-logo">
+            <img src="csp_logo.png" alt="Wiom CSP" />
+          </div>
+          <div class="app-title">Wiom CSP</div>
+          <div class="app-subtitle">अपना रजिस्टर्ड नंबर डालें</div>
+
+          <div class="field-label">मोबाइल नंबर</div>
+          <div class="input-row">
+            <div class="prefix">+91</div>
+            <input type="tel" id="phoneInput" inputmode="numeric" maxlength="10" placeholder="98XXXXXXXX" autocomplete="off" />
+          </div>
+          <div class="field-hint">10 अंकों का मोबाइल नंबर डालें — हम आपको OTP भेजेंगे</div>
+
+          <div class="terms">
+            आगे बढ़ने पर आप हमारी <a href="#">शर्तें</a> और <a href="#">प्राइवेसी पॉलिसी</a> मानते हैं
+          </div>
+        </div>
+        <div class="cta-bar">
+          <button class="cta-primary" id="getOtpCta" disabled>OTP भेजें</button>
+        </div>
+      </div>
+
+      <!-- ── PAGE 2: OTP ── -->
+      <div class="page" id="page-otp">
+        <div class="topbar">
+          <svg class="back" id="otpBack" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </div>
+        <div class="body">
+          <div class="csp-logo">
+            <img src="csp_logo.png" alt="Wiom CSP" />
+          </div>
+          <div class="app-title">OTP डालें</div>
+          <div class="app-subtitle"><span id="otpSubtitlePhone">+91 98XXXXXXXX</span> पर 6 अंकों का OTP भेजा गया है</div>
+
+          <div class="otp-row" id="otpRow">
+            <input type="tel" inputmode="numeric" maxlength="1" />
+            <input type="tel" inputmode="numeric" maxlength="1" />
+            <input type="tel" inputmode="numeric" maxlength="1" />
+            <input type="tel" inputmode="numeric" maxlength="1" />
+            <input type="tel" inputmode="numeric" maxlength="1" />
+            <input type="tel" inputmode="numeric" maxlength="1" />
+          </div>
+
+          <div class="resend-row">
+            <span id="resendText"><span class="resend-link disabled" id="resendLink">फिर से भेजें</span> · <span id="resendTimer">30s</span></span>
+          </div>
+        </div>
+        <div class="cta-bar">
+          <button class="cta-primary" id="verifyCta" disabled>वेरीफाई करें</button>
+        </div>
+      </div>
+
+      <!-- ── PAGE 3: Verified ── -->
+      <div class="page" id="page-done">
+        <div class="body" style="text-align:center;">
+          <div class="success-tick">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+          </div>
+          <div class="app-title">हो गया</div>
+          <div class="app-subtitle">आपका नंबर वेरीफाई हो गया है। अब अगले पन्ने पर permissions allow करना होगा।</div>
+
+          <div class="next-card">
+            <b>आगे का स्टेप:</b> Permission page — सिस्टम को कुछ permissions चाहिए जिससे ग्राहक को FPN call आ सके।
+          </div>
+        </div>
+        <div class="cta-bar">
+          <button class="cta-primary" id="continueCta">आगे बढ़ें</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const pages       = { login: document.getElementById('page-login'),
+                        otp:   document.getElementById('page-otp'),
+                        done:  document.getElementById('page-done') };
+  const stepLabel   = document.getElementById('stepLabel');
+  const ctrlBtns    = document.querySelectorAll('.controls button');
+  const labels      = { login: '1 · नंबर डालें', otp: '2 · OTP डालें', done: '3 · वेरीफाई · हो गया' };
+
+  const phoneInput  = document.getElementById('phoneInput');
+  const getOtpCta   = document.getElementById('getOtpCta');
+  const verifyCta   = document.getElementById('verifyCta');
+  const otpRow      = document.getElementById('otpRow');
+  const otpInputs   = Array.from(otpRow.querySelectorAll('input'));
+  const otpBack     = document.getElementById('otpBack');
+  const continueCta = document.getElementById('continueCta');
+  const subtitlePhone = document.getElementById('otpSubtitlePhone');
+  const resendLink    = document.getElementById('resendLink');
+  const resendTimer   = document.getElementById('resendTimer');
+  const autofillBtn   = document.getElementById('autofill');
+
+  let resendInterval = null;
+
+  /* ─── Page transitions ─────────────────────────────────────────── */
+  function show(step) {
+    Object.entries(pages).forEach(([key, el]) => {
+      el.classList.remove('active', 'left');
+      if (key === step) el.classList.add('active');
+      else if (orderIndex(key) < orderIndex(step)) el.classList.add('left');
+    });
+    stepLabel.textContent = labels[step];
+    ctrlBtns.forEach(b => b.classList.toggle('active', b.dataset.jump === step));
+    if (step === 'otp') startResendTimer();
+    else clearResendTimer();
+  }
+  function orderIndex(step) { return { login: 0, otp: 1, done: 2 }[step] ?? 0; }
+
+  /* ─── Login screen ─────────────────────────────────────────────── */
+  phoneInput.addEventListener('input', (e) => {
+    // Digits only, max 10
+    const v = e.target.value.replace(/\D/g, '').slice(0, 10);
+    e.target.value = v;
+    getOtpCta.disabled = v.length !== 10;
+  });
+  getOtpCta.addEventListener('click', () => {
+    if (phoneInput.value.length !== 10) return;
+    const masked = '+91 ' + phoneInput.value.slice(0,2) + 'XXXX' + phoneInput.value.slice(6);
+    subtitlePhone.textContent = masked;
+    otpInputs.forEach(i => { i.value = ''; i.classList.remove('filled'); });
+    verifyCta.disabled = true;
+    show('otp');
+    setTimeout(() => otpInputs[0].focus(), 400);
+  });
+
+  /* ─── OTP screen ───────────────────────────────────────────────── */
+  otpInputs.forEach((input, idx) => {
+    input.addEventListener('input', (e) => {
+      const v = e.target.value.replace(/\D/g, '').slice(0, 1);
+      e.target.value = v;
+      e.target.classList.toggle('filled', !!v);
+      if (v && idx < otpInputs.length - 1) otpInputs[idx + 1].focus();
+      // Enable verify when all 6 are filled
+      const all = otpInputs.every(i => i.value.length === 1);
+      verifyCta.disabled = !all;
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !e.target.value && idx > 0) {
+        otpInputs[idx - 1].focus();
+        otpInputs[idx - 1].value = '';
+        otpInputs[idx - 1].classList.remove('filled');
+        verifyCta.disabled = true;
+      }
+    });
+    input.addEventListener('paste', (e) => {
+      e.preventDefault();
+      const text = (e.clipboardData || window.clipboardData).getData('text');
+      const digits = text.replace(/\D/g, '').slice(0, 6);
+      otpInputs.forEach((inp, i) => {
+        inp.value = digits[i] || '';
+        inp.classList.toggle('filled', !!digits[i]);
+      });
+      verifyCta.disabled = digits.length !== 6;
+      if (digits.length === 6) verifyCta.focus();
+    });
+  });
+
+  verifyCta.addEventListener('click', () => {
+    if (verifyCta.disabled) return;
+    // For demo: any 6 digits succeed
+    show('done');
+  });
+
+  otpBack.addEventListener('click', () => show('login'));
+  continueCta.addEventListener('click', () => {
+    // In app: navigates to PermissionFlow. Prototype just shows a hint.
+    continueCta.textContent = 'Permission page खुल रहा है…';
+    continueCta.disabled = true;
+    setTimeout(() => {
+      continueCta.textContent = 'आगे बढ़ें';
+      continueCta.disabled = false;
+    }, 1400);
+  });
+
+  /* ─── Resend timer ─────────────────────────────────────────────── */
+  function startResendTimer(seconds = 30) {
+    clearResendTimer();
+    let remaining = seconds;
+    resendLink.classList.add('disabled');
+    resendTimer.style.display = 'inline';
+    resendTimer.textContent = `${remaining}s`;
+    resendInterval = setInterval(() => {
+      remaining--;
+      if (remaining <= 0) {
+        clearResendTimer();
+        resendLink.classList.remove('disabled');
+        resendTimer.style.display = 'none';
+      } else {
+        resendTimer.textContent = `${remaining}s`;
+      }
+    }, 1000);
+  }
+  function clearResendTimer() {
+    if (resendInterval) { clearInterval(resendInterval); resendInterval = null; }
+  }
+  resendLink.addEventListener('click', () => {
+    if (resendLink.classList.contains('disabled')) return;
+    startResendTimer();
+    otpInputs.forEach(i => { i.value = ''; i.classList.remove('filled'); });
+    verifyCta.disabled = true;
+    otpInputs[0].focus();
+  });
+
+  /* ─── Demo autofill ────────────────────────────────────────────── */
+  autofillBtn.addEventListener('click', () => {
+    // Get which page is currently active and fill accordingly.
+    const active = Object.entries(pages).find(([_, el]) => el.classList.contains('active'))?.[0];
+    if (active === 'login') {
+      phoneInput.value = '9876543210';
+      getOtpCta.disabled = false;
+      phoneInput.focus();
+    } else if (active === 'otp') {
+      const code = '123456';
+      otpInputs.forEach((inp, i) => {
+        inp.value = code[i];
+        inp.classList.add('filled');
+      });
+      verifyCta.disabled = false;
+      verifyCta.focus();
+    }
+  });
+
+  /* ─── Stage controls ───────────────────────────────────────────── */
+  ctrlBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const step = btn.dataset.jump;
+      if (step === 'otp') {
+        // Set a demo phone if user jumped without typing one
+        if (!phoneInput.value || phoneInput.value.length !== 10) {
+          phoneInput.value = '9876543210';
+          subtitlePhone.textContent = '+91 98XXXX3210';
+        }
+      }
+      show(step);
+    });
+  });
+
+  // Boot
+  show('login');
+</script>
+</body>
+</html>

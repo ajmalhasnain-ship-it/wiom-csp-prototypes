@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Permission Page — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --brand-primary: #D9008D;
+    --brand-primary-dim: #B8007A;
+    --bg-screen: #F4F4F4;
+    --bg-surface: #FFFFFF;
+    --bg-info-subtle: #E6F1FB;
+    --bg-positive-subtle: #E6F5EC;
+    --bg-warning-subtle: #FFF4DA;
+    --bg-brand-subtle: rgba(217,0,141,0.08);
+    --state-info: #1B7FD3;
+    --state-positive: #1E9B4A;
+    --state-warning: #C77700;
+    --text-primary: #141414;
+    --text-secondary: #5C5C5C;
+    --text-hint: #9A9A9A;
+    --text-disabled: #BABABA;
+    --stroke-primary: #E4E4E4;
+    --stroke-subtle: #EDEDED;
+    --radius-card: 12px;
+    --radius-cta: 16px;
+    --radius-pill: 999px;
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 12px;
+    --space-lg: 16px;
+    --space-xl: 24px;
+    --shadow-card: 0 1px 2px rgba(0,0,0,0.04), 0 0 1px rgba(0,0,0,0.06);
+    --shadow-cta-bar: 0 -2px 8px rgba(0,0,0,0.06);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: 'Hind', 'Inter', system-ui, sans-serif;
+    background: linear-gradient(135deg, #2a2a2a, #0a0a0a);
+    color: var(--text-primary);
+    display: grid;
+    place-items: start center;
+    padding: 32px 16px 48px;
+    min-height: 100vh;
+  }
+
+  /* Stage */
+  .stage { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .stage h1 {
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 18px;
+    margin: 0;
+  }
+  .stage .subtitle {
+    color: rgba(255,255,255,0.55);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    text-align: center;
+    max-width: 460px;
+    line-height: 1.5;
+  }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
+  .controls button {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.16);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .controls button:hover { background: rgba(255,255,255,0.14); }
+  .controls button.active { background: var(--brand-primary); border-color: var(--brand-primary); }
+  .step-label {
+    color: rgba(255,255,255,0.55);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+  }
+  .step-label b { color: #fff; font-weight: 600; }
+
+  /* Device frame */
+  .device {
+    width: 392px;
+    height: 802px;
+    background: #000;
+    border-radius: 44px;
+    padding: 10px;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.5), 0 0 0 2px rgba(255,255,255,0.04) inset;
+    position: relative;
+  }
+  .screen {
+    width: 100%;
+    height: 100%;
+    background: var(--bg-surface);
+    border-radius: 34px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Status bar */
+  .status-bar {
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 22px 0;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-primary);
+    flex-shrink: 0;
+  }
+  .status-bar .right { display: flex; gap: 5px; align-items: center; }
+  .status-bar svg { width: 14px; height: 14px; }
+
+  /* Top bar — no back since this is a blocker page */
+  .topbar {
+    height: 56px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    background: var(--bg-surface);
+    flex-shrink: 0;
+  }
+  .topbar .title { font-size: 18px; font-weight: 600; }
+
+  /* Body */
+  .body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 16px 16px;
+    background: var(--bg-screen);
+  }
+  .body::-webkit-scrollbar { width: 4px; }
+  .body::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 2px; }
+
+  /* CSP logo (clipped) */
+  .csp-logo {
+    width: 88px;
+    height: 88px;
+    border-radius: 16px;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    margin: 16px auto 12px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.10);
+  }
+  .csp-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .page-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-align: center;
+    margin: 6px 0 6px;
+  }
+  .page-subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+    text-align: center;
+    margin: 0 8px 18px;
+    line-height: 1.5;
+  }
+
+  /* Progress strip */
+  .progress {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: center;
+    margin: 0 0 16px;
+  }
+  .progress .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--stroke-primary);
+  }
+  .progress .dot.done { background: var(--state-positive); }
+  .progress .dot.active { background: var(--brand-primary); }
+  .progress .label {
+    margin-left: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  /* Permission step card */
+  .perm-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--stroke-primary);
+    border-radius: var(--radius-card);
+    padding: 14px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow-card);
+    transition: border-color .2s, opacity .2s;
+  }
+  .perm-card.locked { opacity: 0.5; }
+  .perm-card.active { border-color: var(--brand-primary); box-shadow: 0 0 0 2px rgba(217,0,141,0.08); }
+  .perm-card.done { background: #FAFAFA; }
+
+  .perm-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .perm-icon {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--bg-brand-subtle);
+    color: var(--brand-primary);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .perm-card.done .perm-icon {
+    background: var(--bg-positive-subtle);
+    color: var(--state-positive);
+  }
+  .perm-icon svg { width: 22px; height: 22px; }
+  .perm-info { flex: 1; min-width: 0; }
+  .perm-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+  }
+  .perm-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+  .status-pill {
+    align-self: flex-start;
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+    background: var(--stroke-primary);
+    color: var(--text-secondary);
+  }
+  .perm-card.active .status-pill {
+    background: var(--bg-brand-subtle);
+    color: var(--brand-primary);
+  }
+  .perm-card.done .status-pill {
+    background: var(--bg-positive-subtle);
+    color: var(--state-positive);
+  }
+
+  /* Step CTA inside card (only the active card shows it) */
+  .perm-action {
+    margin-top: 12px;
+    padding-left: 52px;
+  }
+  button.cta-secondary {
+    height: 40px;
+    padding: 0 16px;
+    background: transparent;
+    color: var(--brand-primary);
+    border: 1px solid var(--brand-primary);
+    border-radius: 12px;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  button.cta-secondary:hover { background: rgba(217,0,141,0.05); }
+  button.cta-secondary.solid {
+    background: var(--brand-primary);
+    color: #fff;
+  }
+  button.cta-secondary.solid:hover { background: var(--brand-primary-dim); }
+
+  /* Bottom continue CTA */
+  .cta-bar {
+    padding: 14px 16px 22px;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--stroke-primary);
+    flex-shrink: 0;
+  }
+  button.cta-primary {
+    width: 100%;
+    height: 48px;
+    background: var(--brand-primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-cta);
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  button.cta-primary:hover:not(:disabled) { background: var(--brand-primary-dim); }
+  button.cta-primary:disabled {
+    background: #EBEBEB;
+    color: var(--text-disabled);
+    cursor: not-allowed;
+  }
+
+  /* OEM badge (when Xiaomi / Vivo / OnePlus step is active) */
+  .oem-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-warning-subtle);
+    color: var(--state-warning);
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .oem-badge svg { width: 12px; height: 12px; }
+
+  /* Restart pill */
+  .pill {
+    position: absolute;
+    top: 36px;
+    right: 16px;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    z-index: 20;
+    cursor: pointer;
+  }
+
+  /* OS settings dialog (simulates the system permission editor) */
+  .scrim {
+    position: absolute;
+    inset: 0;
+    background: rgba(20,20,20,0.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s;
+    z-index: 8;
+  }
+  .scrim.visible { opacity: 1; pointer-events: auto; }
+  .os-dialog {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    background: #1A1A1A;
+    color: #fff;
+    transform: translateY(100%);
+    transition: transform .35s cubic-bezier(.22,1,.36,1);
+    font-family: 'Inter', sans-serif;
+  }
+  .os-dialog.visible { transform: translateY(0); }
+  .os-dialog .os-topbar {
+    padding: 36px 20px 18px;
+    background: #232323;
+    border-bottom: 1px solid #333;
+  }
+  .os-dialog .os-title { font-size: 17px; font-weight: 600; }
+  .os-dialog .os-subtitle { font-size: 12px; color: #999; margin-top: 4px; }
+  .os-dialog .os-body { flex: 1; padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+  .os-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: 1px solid #2a2a2a;
+  }
+  .os-row .os-row-title { font-size: 15px; color: #fff; }
+  .os-row .toggle {
+    width: 44px; height: 26px;
+    border-radius: 999px;
+    background: #444;
+    position: relative;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .os-row .toggle::after {
+    content: '';
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform .2s;
+  }
+  .os-row.on .toggle { background: var(--brand-primary); }
+  .os-row.on .toggle::after { transform: translateX(18px); }
+  .os-dialog .os-cta {
+    padding: 16px 20px 24px;
+    border-top: 1px solid #2a2a2a;
+  }
+  .os-dialog .os-cta button {
+    width: 100%;
+    height: 48px;
+    background: #fff;
+    color: #1A1A1A;
+    border: none;
+    border-radius: 16px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <h1>Permission Page · प्रोटोटाइप</h1>
+  <div class="subtitle">
+    The FpnPermissionChecker screen — Wiom CSP needs 4 OS-level permissions before FPN call-overlay works. Tap each step's "allow" CTA to open the (simulated) OS settings dialog and toggle them on. Once all are done, the bottom "आगे बढ़ें" CTA enables.
+  </div>
+
+  <div class="controls">
+    <button data-jump="0">Reset · 0/4</button>
+    <button data-jump="1">After 1/4</button>
+    <button data-jump="2">After 2/4</button>
+    <button data-jump="3">After 3/4 · Xiaomi step</button>
+    <button data-jump="4">All done · 4/4</button>
+  </div>
+  <div class="step-label">Granted: <b id="stepLabel">0 / 4</b></div>
+
+  <div class="device">
+    <div class="screen">
+      <!-- Status bar -->
+      <div class="status-bar">
+        <span>9:41</span>
+        <div class="right">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 11h2v3H1zM5 8h2v6H5zM9 5h2v9H9zM13 2h2v12h-2z"/></svg>
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 12.5a1 1 0 100 2 1 1 0 000-2zm3.18-2.71L8 12.97l-3.18-3.18A4.49 4.49 0 018 8.5c1.2 0 2.31.47 3.18 1.29zm2.83-2.83L8 1.66 1.99 6.96a8.49 8.49 0 0112.02 0z"/></svg>
+          <svg viewBox="0 0 24 12" fill="currentColor"><rect x="1" y="1" width="20" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.2"/><rect x="22" y="4" width="1.5" height="4" rx=".5"/><rect x="3" y="3" width="14" height="6" rx="1"/></svg>
+        </div>
+      </div>
+
+      <!-- Top bar -->
+      <div class="topbar">
+        <div class="title">Permissions</div>
+      </div>
+
+      <!-- Body -->
+      <div class="body">
+        <div class="csp-logo">
+          <img src="csp_logo.png" alt="Wiom CSP" />
+        </div>
+        <div class="page-title">Wiom CSP को कुछ permissions चाहिए</div>
+        <div class="page-subtitle">जिससे ग्राहक के घर जाते समय आपको FPN call आ सके और सही समय पर action कर सकें।</div>
+
+        <div class="progress">
+          <div class="dot" id="dot-0"></div>
+          <div class="dot" id="dot-1"></div>
+          <div class="dot" id="dot-2"></div>
+          <div class="dot" id="dot-3"></div>
+          <span class="label" id="progressLabel">Step 1 of 4</span>
+        </div>
+
+        <!-- Step 1: Notifications -->
+        <div class="perm-card" id="card-0">
+          <div class="perm-row">
+            <div class="perm-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+            </div>
+            <div class="perm-info">
+              <div class="perm-title">Notifications</div>
+              <div class="perm-desc">FPN call आते ही notification आए जिससे आप तुरंत respond कर सकें</div>
+            </div>
+            <div class="status-pill" id="pill-0">बाकी है</div>
+          </div>
+          <div class="perm-action" id="action-0">
+            <button class="cta-secondary solid" data-grant="0">Allow notifications</button>
+          </div>
+        </div>
+
+        <!-- Step 2: Battery optimization -->
+        <div class="perm-card locked" id="card-1">
+          <div class="perm-row">
+            <div class="perm-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="18" height="10" rx="2"/><line x1="22" y1="11" x2="22" y2="13"/><line x1="6" y1="10" x2="6" y2="14"/><line x1="10" y1="10" x2="10" y2="14"/></svg>
+            </div>
+            <div class="perm-info">
+              <div class="perm-title">Battery optimization हटाएँ</div>
+              <div class="perm-desc">Background में app बंद न हो जिससे call miss न हो</div>
+            </div>
+            <div class="status-pill" id="pill-1">बाकी है</div>
+          </div>
+          <div class="perm-action" id="action-1" style="display:none;">
+            <button class="cta-secondary solid" data-grant="1">Allow battery exemption</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Display over other apps -->
+        <div class="perm-card locked" id="card-2">
+          <div class="perm-row">
+            <div class="perm-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            </div>
+            <div class="perm-info">
+              <div class="perm-title">Display over other apps</div>
+              <div class="perm-desc">FPN call screen ऊपर overlay करे ताकि कोई भी app में हो call हमेशा दिखे</div>
+            </div>
+            <div class="status-pill" id="pill-2">बाकी है</div>
+          </div>
+          <div class="perm-action" id="action-2" style="display:none;">
+            <button class="cta-secondary solid" data-grant="2">Allow display over apps</button>
+          </div>
+        </div>
+
+        <!-- Step 4: Xiaomi (OEM single CTA) -->
+        <div class="perm-card locked" id="card-3">
+          <div class="perm-row">
+            <div class="perm-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+            </div>
+            <div class="perm-info">
+              <div class="oem-badge">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                Xiaomi · MIUI
+              </div>
+              <div class="perm-title">Auto-start + Lock screen</div>
+              <div class="perm-desc">Xiaomi-specific permissions ताकि phone lock में भी FPN call आ सके</div>
+            </div>
+            <div class="status-pill" id="pill-3">बाकी है</div>
+          </div>
+          <div class="perm-action" id="action-3" style="display:none;">
+            <button class="cta-secondary solid" data-grant="3">Open settings to allow permissions</button>
+          </div>
+        </div>
+
+        <div style="height:16px;"></div>
+      </div>
+
+      <!-- Continue CTA -->
+      <div class="cta-bar">
+        <button class="cta-primary" id="continueCta" disabled>आगे बढ़ें</button>
+      </div>
+
+      <!-- ── Restart pill ── -->
+      <button class="pill" id="restart">↻ Reset</button>
+
+      <!-- ── OS scrim + dialog ── -->
+      <div class="scrim" id="scrim"></div>
+      <div class="os-dialog" id="osDialog">
+        <div class="os-topbar">
+          <div class="os-title" id="osTitle">Settings</div>
+          <div class="os-subtitle" id="osSubtitle">Toggle the permission below, then come back to the app.</div>
+        </div>
+        <div class="os-body">
+          <div class="os-row" id="osRow">
+            <div class="os-row-title" id="osRowTitle">Wiom CSP</div>
+            <div class="toggle" id="osToggle"></div>
+          </div>
+        </div>
+        <div class="os-cta">
+          <button id="osBack">Back to Wiom CSP</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ─── State ─── */
+  const TOTAL = 4;
+  const titles = [
+    'Notifications',
+    'Battery optimization',
+    'Display over other apps',
+    'Xiaomi · Auto-start + Lock',
+  ];
+  const osNames = [
+    'Wiom CSP — Notifications',
+    'Wiom CSP — Battery exemption',
+    'Wiom CSP — Display over apps',
+    'Wiom CSP — Auto-start',
+  ];
+
+  let granted = [false, false, false, false];
+  let currentOpen = -1;
+
+  /* ─── Refs ─── */
+  const stepLabel = document.getElementById('stepLabel');
+  const progressLabel = document.getElementById('progressLabel');
+  const continueCta = document.getElementById('continueCta');
+  const scrim = document.getElementById('scrim');
+  const osDialog = document.getElementById('osDialog');
+  const osTitle = document.getElementById('osTitle');
+  const osRowTitle = document.getElementById('osRowTitle');
+  const osRow = document.getElementById('osRow');
+  const osToggle = document.getElementById('osToggle');
+  const osBack = document.getElementById('osBack');
+  const ctrlBtns = document.querySelectorAll('.controls button');
+
+  /* ─── Render ─── */
+  function render() {
+    let activeIdx = granted.findIndex(g => !g);
+    if (activeIdx === -1) activeIdx = TOTAL; // all done
+    let count = granted.filter(g => g).length;
+
+    stepLabel.textContent = `${count} / ${TOTAL}`;
+    progressLabel.textContent = activeIdx === TOTAL ? `सब हो गया` : `Step ${activeIdx + 1} of ${TOTAL}`;
+
+    // Progress dots
+    for (let i = 0; i < TOTAL; i++) {
+      const dot = document.getElementById('dot-' + i);
+      dot.classList.remove('done', 'active');
+      if (granted[i]) dot.classList.add('done');
+      else if (i === activeIdx) dot.classList.add('active');
+    }
+
+    // Cards
+    for (let i = 0; i < TOTAL; i++) {
+      const card = document.getElementById('card-' + i);
+      const pill = document.getElementById('pill-' + i);
+      const action = document.getElementById('action-' + i);
+      card.classList.remove('locked', 'active', 'done');
+      if (granted[i]) {
+        card.classList.add('done');
+        pill.textContent = '✓ हो गया';
+        action.style.display = 'none';
+      } else if (i === activeIdx) {
+        card.classList.add('active');
+        pill.textContent = 'अभी करें';
+        action.style.display = 'block';
+      } else {
+        card.classList.add('locked');
+        pill.textContent = 'बाकी है';
+        action.style.display = 'none';
+      }
+    }
+
+    // Continue CTA
+    continueCta.disabled = activeIdx !== TOTAL;
+    continueCta.textContent = activeIdx === TOTAL ? 'आगे बढ़ें · home खोलें' : 'आगे बढ़ें';
+
+    // Controls highlight
+    ctrlBtns.forEach((b, i) => b.classList.toggle('active', i === count));
+  }
+
+  /* ─── OS dialog ─── */
+  function openOs(idx) {
+    currentOpen = idx;
+    osTitle.textContent = 'Settings · ' + titles[idx];
+    osRowTitle.textContent = osNames[idx];
+    osRow.classList.toggle('on', granted[idx]);
+    osToggle.onclick = () => {
+      osRow.classList.toggle('on');
+    };
+    scrim.classList.add('visible');
+    osDialog.classList.add('visible');
+  }
+  function closeOs() {
+    // Persist the toggle state
+    if (currentOpen >= 0) {
+      const isOn = osRow.classList.contains('on');
+      granted[currentOpen] = isOn;
+    }
+    currentOpen = -1;
+    scrim.classList.remove('visible');
+    osDialog.classList.remove('visible');
+    render();
+  }
+  osBack.addEventListener('click', closeOs);
+  scrim.addEventListener('click', closeOs);
+
+  /* ─── Wiring ─── */
+  document.querySelectorAll('[data-grant]').forEach(btn => {
+    btn.addEventListener('click', () => openOs(parseInt(btn.dataset.grant, 10)));
+  });
+
+  document.getElementById('restart').addEventListener('click', () => {
+    granted = [false, false, false, false];
+    render();
+  });
+
+  continueCta.addEventListener('click', () => {
+    if (continueCta.disabled) return;
+    continueCta.textContent = 'Home खुल रहा है…';
+    continueCta.disabled = true;
+    setTimeout(() => render(), 1400);
+  });
+
+  /* ─── Stage controls ─── */
+  ctrlBtns.forEach((btn, i) => {
+    btn.addEventListener('click', () => {
+      granted = [false, false, false, false];
+      for (let k = 0; k < i; k++) granted[k] = true;
+      render();
+    });
+  });
+
+  render();
+</script>
+</body>
+</html>

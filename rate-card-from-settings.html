@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Rate Card from Settings — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --brand-primary: #D9008D;
+    --brand-primary-dim: #B8007A;
+    --bg-screen: #F4F4F4;
+    --bg-surface: #FFFFFF;
+    --bg-scrim: rgba(20,20,20,0.45);
+    --bg-info-subtle: #E6F1FB;
+    --bg-positive-subtle: #E6F5EC;
+    --bg-brand-subtle: rgba(217,0,141,0.08);
+    --state-info: #1B7FD3;
+    --state-positive: #1E9B4A;
+    --text-primary: #141414;
+    --text-secondary: #5C5C5C;
+    --text-hint: #9A9A9A;
+    --text-disabled: #BABABA;
+    --stroke-primary: #E4E4E4;
+    --stroke-subtle: #EDEDED;
+    --radius-card: 12px;
+    --radius-cta: 16px;
+    --radius-dialog: 24px;
+    --radius-chip: 12px;
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 12px;
+    --space-lg: 16px;
+    --space-xl: 24px;
+    --shadow-card: 0 1px 2px rgba(0,0,0,0.04), 0 0 1px rgba(0,0,0,0.06);
+    --shadow-cta-bar: 0 -2px 8px rgba(0,0,0,0.06);
+    --shadow-xl: 0 24px 48px rgba(0,0,0,0.18);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: 'Hind', 'Inter', system-ui, sans-serif;
+    background: linear-gradient(135deg, #2a2a2a, #0a0a0a);
+    color: var(--text-primary);
+    display: grid;
+    place-items: start center;
+    padding: 32px 16px 48px;
+    min-height: 100vh;
+  }
+
+  /* Stage */
+  .stage { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .stage h1 {
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 18px;
+    margin: 0;
+  }
+  .stage .subtitle {
+    color: rgba(255,255,255,0.55);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    text-align: center;
+    max-width: 460px;
+    line-height: 1.5;
+  }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
+  .controls button {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.16);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+  }
+  .controls button:hover { background: rgba(255,255,255,0.14); }
+  .controls button.active { background: var(--brand-primary); border-color: var(--brand-primary); }
+  .step-label {
+    color: rgba(255,255,255,0.55);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+  }
+  .step-label b { color: #fff; font-weight: 600; }
+
+  /* Device */
+  .device {
+    width: 392px;
+    height: 802px;
+    background: #000;
+    border-radius: 44px;
+    padding: 10px;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.5), 0 0 0 2px rgba(255,255,255,0.04) inset;
+    position: relative;
+  }
+  .screen {
+    width: 100%;
+    height: 100%;
+    background: var(--bg-surface);
+    border-radius: 34px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Status bar */
+  .status-bar {
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 22px 0;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-primary);
+    flex-shrink: 0;
+  }
+  .status-bar .right { display: flex; gap: 5px; align-items: center; }
+  .status-bar svg { width: 14px; height: 14px; }
+
+  /* Page slide container */
+  .page {
+    position: absolute;
+    inset: 28px 0 0;
+    background: var(--bg-screen);
+    transform: translateX(100%);
+    transition: transform .35s cubic-bezier(.22,1,.36,1);
+    display: flex;
+    flex-direction: column;
+  }
+  .page.active { transform: translateX(0); z-index: 2; }
+  .page.left { transform: translateX(-100%); }
+
+  /* Top bar */
+  .topbar {
+    height: 56px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--stroke-primary);
+    flex-shrink: 0;
+  }
+  .topbar .back {
+    width: 24px; height: 24px;
+    color: var(--text-primary);
+    cursor: pointer;
+  }
+  .topbar .title { font-size: 18px; font-weight: 600; }
+
+  /* Body */
+  .body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 0 16px;
+  }
+  .body.body-padded { padding: 16px; }
+
+  /* ── Settings rows ── */
+  .section-header {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    padding: 14px 20px 8px;
+    text-transform: none;
+    letter-spacing: 0.2px;
+  }
+  .settings-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    margin: 0 16px 6px;
+    border-radius: var(--radius-chip);
+    background: var(--bg-surface);
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background .15s;
+  }
+  .settings-row:hover { background: #FAFAFA; }
+  .settings-row .lead-icon {
+    width: 24px; height: 24px;
+    color: var(--text-primary);
+  }
+  .settings-row .row-label {
+    flex: 1;
+    font-size: 15px;
+    color: var(--text-primary);
+  }
+  .settings-row .chev {
+    width: 20px; height: 20px;
+    color: var(--text-hint);
+  }
+  .profile-row {
+    padding: 16px;
+    background: var(--bg-surface);
+    margin: 0 16px 6px;
+    border-radius: var(--radius-chip);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .profile-row .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg-brand-subtle);
+    color: var(--brand-primary);
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+  }
+  .profile-row .name { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+  .profile-row .meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+  .version-line {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-hint);
+    padding: 24px 0 8px;
+  }
+
+  /* ── Agreement screen: rate card row ── */
+  .agreement-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--stroke-primary);
+    border-radius: var(--radius-card);
+    padding: 18px 16px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    box-shadow: var(--shadow-card);
+    transition: background .15s;
+  }
+  .agreement-card:hover { background: #FAFAFA; }
+  .agreement-card .title {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .agreement-card .action {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--brand-primary);
+  }
+  .agreement-card .action-icon {
+    width: 18px;
+    height: 18px;
+    color: var(--brand-primary);
+  }
+
+  /* ── Scrim ── */
+  .scrim {
+    position: absolute;
+    inset: 0;
+    background: var(--bg-scrim);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s ease;
+    z-index: 8;
+  }
+  .scrim.visible { opacity: 1; pointer-events: auto; }
+
+  /* ── Language picker dialog ── */
+  .dialog-wrap {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    z-index: 12;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s ease;
+  }
+  .dialog-wrap.visible { opacity: 1; pointer-events: auto; }
+  .dialog {
+    width: 312px;
+    background: var(--bg-surface);
+    border-radius: var(--radius-dialog);
+    box-shadow: var(--shadow-xl);
+    padding: 28px 24px 24px;
+    text-align: center;
+    transform: scale(0.92);
+    transition: transform .28s cubic-bezier(.22,1,.36,1);
+  }
+  .dialog-wrap.visible .dialog { transform: scale(1); }
+
+  .glyph-badge {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    background: rgba(217,0,141,0.08);
+    display: grid;
+    place-items: center;
+    color: var(--brand-primary);
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    letter-spacing: 1px;
+  }
+  .glyph-badge .devnagari { font-family: 'Hind', sans-serif; }
+
+  .dialog h3 {
+    margin: 0 0 22px;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.4;
+    color: var(--text-primary);
+  }
+  .dialog .actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  button.cta-primary {
+    width: 100%;
+    height: 48px;
+    background: var(--brand-primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-cta);
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  button.cta-primary:hover:not(:disabled) { background: var(--brand-primary-dim); }
+  button.cta-secondary {
+    width: 100%;
+    height: 48px;
+    background: transparent;
+    color: var(--brand-primary);
+    border: 1px solid var(--brand-primary);
+    border-radius: var(--radius-cta);
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  button.cta-secondary:hover { background: rgba(217,0,141,0.05); }
+
+  /* ── DownloadStatusBar (Figma 8847:27810) ── */
+  .download-bar {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 18px;
+    background: var(--bg-info-subtle);
+    border-radius: var(--radius-card);
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 6;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity .25s, transform .3s, background .25s;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-primary);
+  }
+  .download-bar.visible { opacity: 1; transform: translateY(0); }
+  .download-bar.success { background: var(--bg-positive-subtle); }
+  .download-bar .icon {
+    width: 20px; height: 20px;
+    display: grid; place-items: center;
+    flex-shrink: 0;
+  }
+  .download-bar.success .icon { color: var(--state-positive); }
+  .download-bar:not(.success) .icon { color: var(--state-info); }
+
+  .spinner {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid rgba(27,127,211,0.25);
+    border-top-color: var(--state-info);
+    animation: spin 0.9s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Restart pill */
+  .pill {
+    position: absolute;
+    top: 36px;
+    right: 16px;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    z-index: 20;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <h1>Rate Card from Settings · प्रोटोटाइप</h1>
+  <div class="subtitle">
+    The "Settings → नियम व दस्तावेज़ → Rate Card" path. Tap नियम व दस्तावेज़ in Settings, then tap the Rate Card row to open the language picker. Pick a language and the download status bar walks <b>"डाउनलोड हो रहा है"</b> → <b>"डाउनलोड हो गया है"</b> → hide.
+  </div>
+
+  <div class="controls">
+    <button data-jump="settings">1 · सेटिंग्स</button>
+    <button data-jump="agreement">2 · नियम व दस्तावेज़</button>
+    <button data-jump="lang">3 · भाषा चुनें</button>
+    <button data-jump="downloading">4 · डाउनलोड हो रहा है</button>
+    <button data-jump="done">5 · डाउनलोड हो गया</button>
+  </div>
+  <div class="step-label">Current step: <b id="stepLabel">1 · सेटिंग्स</b></div>
+
+  <div class="device">
+    <div class="screen">
+      <!-- Status bar -->
+      <div class="status-bar">
+        <span>9:41</span>
+        <div class="right">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 11h2v3H1zM5 8h2v6H5zM9 5h2v9H9zM13 2h2v12h-2z"/></svg>
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 12.5a1 1 0 100 2 1 1 0 000-2zm3.18-2.71L8 12.97l-3.18-3.18A4.49 4.49 0 018 8.5c1.2 0 2.31.47 3.18 1.29zm2.83-2.83L8 1.66 1.99 6.96a8.49 8.49 0 0112.02 0z"/></svg>
+          <svg viewBox="0 0 24 12" fill="currentColor"><rect x="1" y="1" width="20" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.2"/><rect x="22" y="4" width="1.5" height="4" rx=".5"/><rect x="3" y="3" width="14" height="6" rx="1"/></svg>
+        </div>
+      </div>
+
+      <button class="pill" id="restart">↻ Restart</button>
+
+      <!-- ── PAGE 1: Settings home ── -->
+      <div class="page active" id="page-settings">
+        <div class="topbar">
+          <svg class="back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          <div class="title">सेटिंग्स</div>
+        </div>
+        <div class="body">
+          <!-- Profile section -->
+          <div class="section-header">प्रोफाइल</div>
+          <div class="profile-row">
+            <div class="avatar">R</div>
+            <div>
+              <div class="name">Rajesh Kumar</div>
+              <div class="meta">एडमिन · CSP-1042</div>
+            </div>
+          </div>
+          <div class="settings-row">
+            <svg class="lead-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="3"/><line x1="14" y1="10" x2="18" y2="10"/><line x1="14" y1="14" x2="18" y2="14"/></svg>
+            <div class="row-label">KYC जानकारी</div>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+          <div class="settings-row">
+            <svg class="lead-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/></svg>
+            <div class="row-label">भाषा बदलें</div>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+          <div class="settings-row">
+            <svg class="lead-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            <div class="row-label">लॉगआउट</div>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+
+          <!-- Documents section -->
+          <div class="section-header" style="margin-top:4px;">दस्तावेज़</div>
+          <div class="settings-row" id="openAgreement">
+            <svg class="lead-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            <div class="row-label">नियम व दस्तावेज़</div>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+
+          <!-- Learn section -->
+          <div class="section-header" style="margin-top:4px;">सीखें</div>
+          <div class="settings-row">
+            <svg class="lead-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+            <div class="row-label">पाठशाला</div>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+
+          <div class="version-line">1.1.4 · 26</div>
+        </div>
+      </div>
+
+      <!-- ── PAGE 2: Agreement (Rate Card list) ── -->
+      <div class="page" id="page-agreement">
+        <div class="topbar">
+          <svg class="back" id="agreementBack" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          <div class="title">नियम व दस्तावेज़</div>
+        </div>
+        <div class="body body-padded">
+          <div class="agreement-card" id="openRateCard">
+            <div class="title">रेट कार्ड</div>
+            <div class="action">डाउनलोड</div>
+            <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </div>
+        </div>
+
+        <!-- DownloadStatusBar (sits inside agreement page, bottom-anchored) -->
+        <div class="download-bar" id="downloadBar">
+          <div class="icon" id="downloadIcon"><div class="spinner"></div></div>
+          <span id="downloadText">डॉक्यूमेंट डाउनलोड हो रहा है</span>
+        </div>
+      </div>
+
+      <!-- ── Scrim ── -->
+      <div class="scrim" id="scrim"></div>
+
+      <!-- ── Language picker dialog ── -->
+      <div class="dialog-wrap" id="dialog-lang">
+        <div class="dialog">
+          <div class="glyph-badge">A&nbsp;<span class="devnagari">अ</span></div>
+          <h3>किस लैंग्वेज में डाक्यूमेंट डाउनलोड करना चाहते हैं ?</h3>
+          <div class="actions">
+            <button class="cta-primary" data-lang="hi">हिन्दी</button>
+            <button class="cta-secondary" data-lang="en">English</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  const pages = {
+    settings:  document.getElementById('page-settings'),
+    agreement: document.getElementById('page-agreement'),
+  };
+  const stepLabel    = document.getElementById('stepLabel');
+  const ctrlBtns     = document.querySelectorAll('.controls button');
+  const scrim        = document.getElementById('scrim');
+  const dialogLang   = document.getElementById('dialog-lang');
+  const downloadBar  = document.getElementById('downloadBar');
+  const downloadIcon = document.getElementById('downloadIcon');
+  const downloadText = document.getElementById('downloadText');
+  const restartBtn   = document.getElementById('restart');
+  const labels = {
+    settings:    '1 · सेटिंग्स',
+    agreement:   '2 · नियम व दस्तावेज़',
+    lang:        '3 · भाषा चुनें',
+    downloading: '4 · डाउनलोड हो रहा है',
+    done:        '5 · डाउनलोड हो गया',
+  };
+
+  let downloadTimer1 = null, downloadTimer2 = null;
+
+  function navigate(pageKey) {
+    Object.entries(pages).forEach(([k, el]) => {
+      el.classList.remove('active', 'left');
+      if (k === pageKey) el.classList.add('active');
+      else if (orderIdx(k) < orderIdx(pageKey)) el.classList.add('left');
+    });
+  }
+  function orderIdx(k) { return { settings: 0, agreement: 1 }[k] ?? 0; }
+
+  function setStep(step) {
+    stepLabel.textContent = labels[step];
+    ctrlBtns.forEach(b => b.classList.toggle('active', b.dataset.jump === step));
+  }
+
+  function hideAllOverlays() {
+    dialogLang.classList.remove('visible');
+    scrim.classList.remove('visible');
+  }
+  function resetDownload() {
+    if (downloadTimer1) { clearTimeout(downloadTimer1); downloadTimer1 = null; }
+    if (downloadTimer2) { clearTimeout(downloadTimer2); downloadTimer2 = null; }
+    downloadBar.classList.remove('visible', 'success');
+  }
+
+  function showLang() {
+    hideAllOverlays();
+    resetDownload();
+    scrim.classList.add('visible');
+    dialogLang.classList.add('visible');
+    setStep('lang');
+  }
+  function showDownloading() {
+    hideAllOverlays();
+    resetDownload();
+    downloadIcon.innerHTML = '<div class="spinner"></div>';
+    downloadText.textContent = 'डॉक्यूमेंट डाउनलोड हो रहा है';
+    downloadBar.classList.remove('success');
+    downloadBar.classList.add('visible');
+    setStep('downloading');
+    downloadTimer1 = setTimeout(showDone, 1500);
+  }
+  function showDone() {
+    downloadIcon.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>';
+    downloadText.textContent = 'डॉक्यूमेंट डाउनलोड हो गया है';
+    downloadBar.classList.add('success', 'visible');
+    setStep('done');
+    downloadTimer2 = setTimeout(() => {
+      downloadBar.classList.remove('visible');
+    }, 2200);
+  }
+
+  /* ── Wiring ── */
+  document.getElementById('openAgreement').addEventListener('click', () => {
+    navigate('agreement');
+    setStep('agreement');
+  });
+  document.getElementById('agreementBack').addEventListener('click', () => {
+    hideAllOverlays();
+    resetDownload();
+    navigate('settings');
+    setStep('settings');
+  });
+  document.getElementById('openRateCard').addEventListener('click', showLang);
+  scrim.addEventListener('click', () => {
+    hideAllOverlays();
+    setStep('agreement');
+  });
+
+  document.querySelectorAll('[data-lang]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      hideAllOverlays();
+      showDownloading();
+    });
+  });
+
+  restartBtn.addEventListener('click', () => {
+    hideAllOverlays();
+    resetDownload();
+    navigate('settings');
+    setStep('settings');
+  });
+
+  /* Stage controls */
+  ctrlBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const step = btn.dataset.jump;
+      switch (step) {
+        case 'settings':
+          hideAllOverlays(); resetDownload();
+          navigate('settings'); setStep('settings'); break;
+        case 'agreement':
+          hideAllOverlays(); resetDownload();
+          navigate('agreement'); setStep('agreement'); break;
+        case 'lang':
+          navigate('agreement');
+          showLang(); break;
+        case 'downloading':
+          navigate('agreement');
+          showDownloading(); break;
+        case 'done':
+          navigate('agreement');
+          resetDownload();
+          downloadBar.classList.add('visible', 'success');
+          downloadIcon.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>';
+          downloadText.textContent = 'डॉक्यूमेंट डाउनलोड हो गया है';
+          setStep('done');
+          break;
+      }
+    });
+  });
+
+  // Boot
+  setStep('settings');
+</script>
+</body>
+</html>

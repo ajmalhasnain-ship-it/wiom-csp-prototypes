@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Rate Card Blocker — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* ── Wiom tokens (subset, mapped from reference_ds_tokens) ─────────── */
+  :root {
+    --brand-primary: #D9008D;
+    --brand-primary-dim: #B8007A;
+    --bg-screen: #F4F4F4;
+    --bg-surface: #FFFFFF;
+    --bg-scrim: rgba(20, 20, 20, 0.45);
+    --bg-info-subtle: #E6F1FB;
+    --bg-positive-subtle: #E6F5EC;
+    --state-info: #1B7FD3;
+    --state-positive: #1E9B4A;
+    --text-primary: #141414;
+    --text-secondary: #6B6B6B;
+    --text-hint: #9A9A9A;
+    --stroke-primary: #E4E4E4;
+    --radius-card: 12px;
+    --radius-cta: 16px;
+    --radius-dialog: 24px;
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 12px;
+    --space-lg: 16px;
+    --space-xl: 24px;
+    --shadow-card: 0 1px 2px rgba(0,0,0,0.04), 0 0 1px rgba(0,0,0,0.06);
+    --shadow-cta-bar: 0 -2px 8px rgba(0,0,0,0.06);
+    --shadow-xl: 0 24px 48px rgba(0,0,0,0.18);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: 'Hind', 'Inter', system-ui, sans-serif;
+    background: linear-gradient(135deg, #2a2a2a, #0a0a0a);
+    color: var(--text-primary);
+    display: grid;
+    place-items: center;
+    padding: 32px 16px;
+    min-height: 100vh;
+  }
+
+  /* ── Page-level guide ──────────────────────────────────────────────── */
+  .stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+  }
+  .stage h1 {
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 18px;
+    letter-spacing: 0.2px;
+    margin: 0;
+  }
+  .stage .subtitle {
+    color: rgba(255,255,255,0.55);
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 13px;
+    text-align: center;
+    max-width: 380px;
+    line-height: 1.5;
+  }
+
+  .controls {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 4px;
+  }
+  .controls button {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.16);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+  }
+  .controls button:hover { background: rgba(255,255,255,0.14); }
+  .controls button.active {
+    background: var(--brand-primary);
+    border-color: var(--brand-primary);
+  }
+
+  /* ── Device frame ─────────────────────────────────────────────────── */
+  .device {
+    width: 392px;
+    height: 802px;
+    background: #000;
+    border-radius: 44px;
+    padding: 10px;
+    box-shadow:
+      0 30px 60px rgba(0,0,0,0.5),
+      0 0 0 2px rgba(255,255,255,0.04) inset;
+    position: relative;
+  }
+  .screen {
+    width: 100%;
+    height: 100%;
+    background: var(--bg-screen);
+    border-radius: 34px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* status bar */
+  .status-bar {
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 22px 0;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-primary);
+  }
+  .status-bar .right { display: flex; gap: 5px; align-items: center; }
+  .status-bar svg { width: 14px; height: 14px; }
+
+  /* top app bar */
+  .topbar {
+    height: 56px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--stroke-primary);
+  }
+  .topbar .title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .topbar .menu {
+    width: 28px;
+    height: 22px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+  }
+  .topbar .menu span {
+    height: 2px;
+    background: var(--text-primary);
+    border-radius: 2px;
+  }
+  .topbar .menu span:nth-child(2) { width: 70%; }
+
+  /* home content (background) */
+  .home-body {
+    height: calc(100% - 28px - 56px);
+    overflow: hidden;
+    padding: 16px;
+  }
+  .csp-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--brand-primary);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+  }
+  .csp-row .name { font-weight: 600; font-size: 16px; }
+  .csp-row .role { font-size: 12px; color: var(--text-secondary); }
+
+  .banner-info {
+    background: var(--bg-info-subtle);
+    border-radius: var(--radius-card);
+    padding: 14px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: var(--text-primary);
+    line-height: 1.45;
+  }
+  .banner-info b { color: var(--state-info); }
+
+  .task-card {
+    background: var(--bg-surface);
+    border-radius: var(--radius-card);
+    padding: 14px;
+    margin-bottom: 10px;
+    border: 1px solid var(--stroke-primary);
+    box-shadow: var(--shadow-card);
+  }
+  .task-card .row1 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .task-card .type {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-primary);
+  }
+  .task-card .commission {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--brand-primary);
+  }
+  .task-card .reason {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  /* Scrim — covers home when blocker visible */
+  .scrim {
+    position: absolute;
+    inset: 0;
+    background: var(--bg-scrim);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s ease;
+    z-index: 5;
+  }
+  .scrim.visible { opacity: 1; pointer-events: auto; }
+
+  /* ── Bottom sheet shell ───────────────────────────────────────────── */
+  .sheet {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    background: var(--bg-surface);
+    border-radius: 20px 20px 0 0;
+    transform: translateY(110%);
+    transition: transform .35s cubic-bezier(.22,1,.36,1);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+  }
+  .sheet.visible { transform: translateY(0); }
+
+  .sheet .body {
+    padding: 28px 24px 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .sheet h2 {
+    margin: 0 0 12px;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.25;
+  }
+  .sheet p.body-text {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--text-primary);
+  }
+  .sheet a.inline-link {
+    color: var(--brand-primary);
+    text-decoration: underline;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* CTA bar */
+  .cta-bar {
+    height: 80px;
+    padding: 16px 20px;
+    border-top: 1px solid var(--stroke-primary);
+    background: var(--bg-surface);
+    box-shadow: var(--shadow-cta-bar);
+  }
+  button.cta-primary {
+    width: 100%;
+    height: 48px;
+    background: var(--brand-primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-cta);
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  button.cta-primary:hover { background: var(--brand-primary-dim); }
+
+  button.cta-secondary {
+    width: 100%;
+    height: 48px;
+    background: transparent;
+    color: var(--brand-primary);
+    border: 1px solid var(--brand-primary);
+    border-radius: var(--radius-cta);
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  button.cta-secondary:hover { background: rgba(217,0,141,0.05); }
+
+  /* Thanks sheet — centered tick illustration */
+  .thanks-tick {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    background: var(--bg-positive-subtle);
+    display: grid;
+    place-items: center;
+  }
+  .thanks-tick svg { width: 32px; height: 32px; color: var(--state-positive); }
+  .sheet.center .body {
+    align-items: center;
+    text-align: center;
+  }
+
+  /* Rate card sheet — document icon */
+  .doc-icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 16px;
+    border-radius: 12px;
+    background: rgba(217,0,141,0.08);
+    display: grid;
+    place-items: center;
+  }
+  .doc-icon svg { width: 28px; height: 28px; color: var(--brand-primary); }
+
+  /* ── Language picker dialog ───────────────────────────────────────── */
+  .dialog-wrap {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    z-index: 15;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s ease;
+  }
+  .dialog-wrap.visible { opacity: 1; pointer-events: auto; }
+
+  .dialog {
+    width: 312px;
+    background: var(--bg-surface);
+    border-radius: var(--radius-dialog);
+    box-shadow: var(--shadow-xl);
+    padding: 28px 24px 24px;
+    text-align: center;
+    transform: scale(0.92);
+    transition: transform .28s cubic-bezier(.22,1,.36,1);
+  }
+  .dialog-wrap.visible .dialog { transform: scale(1); }
+
+  .glyph-badge {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    background: rgba(217,0,141,0.08);
+    display: grid;
+    place-items: center;
+    color: var(--brand-primary);
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    letter-spacing: 1px;
+  }
+  .glyph-badge .latin { font-family: 'Inter', sans-serif; }
+  .glyph-badge .devnagari { font-family: 'Hind', sans-serif; }
+
+  .dialog h3 {
+    margin: 0 0 22px;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.4;
+    color: var(--text-primary);
+  }
+  .dialog .actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* ── Home banner (post lang-pick) ─────────────────────────────────── */
+  .home-banner {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 16px;
+    background: var(--bg-info-subtle);
+    border-radius: var(--radius-card);
+    padding: 14px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-primary);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity .25s, transform .3s, background .3s;
+    z-index: 6;
+  }
+  .home-banner.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .home-banner.success {
+    background: var(--bg-positive-subtle);
+  }
+  .home-banner .icon { width: 20px; height: 20px; display: grid; place-items: center; }
+  .home-banner.success .icon { color: var(--state-positive); }
+  .home-banner:not(.success) .icon { color: var(--state-info); }
+
+  .spinner {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid rgba(27,127,211,0.25);
+    border-top-color: var(--state-info);
+    animation: spin 0.9s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Restart pill */
+  .pill {
+    position: absolute;
+    top: 36px;
+    right: 16px;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    z-index: 20;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity .2s;
+  }
+  .pill.show { opacity: 1; }
+
+  /* Step label */
+  .step-label {
+    color: rgba(255,255,255,0.55);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    margin-top: 4px;
+  }
+  .step-label b { color: #fff; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <h1>Rate Card Blocker · प्रोटोटाइप</h1>
+  <div class="subtitle">First-time PayG agreement flow per Figma 8847:27821. Tap through the steps to walk the user from “जरूरी अपडेट” to the rate-card download success banner.</div>
+
+  <div class="controls">
+    <button data-jump="update">1 · जरूरी अपडेट</button>
+    <button data-jump="thanks">2 · धन्यवाद</button>
+    <button data-jump="ratecard">3 · रेट कार्ड रेडी</button>
+    <button data-jump="lang">4 · भाषा चुनें</button>
+    <button data-jump="done">5 · डाउनलोड बैनर</button>
+  </div>
+  <div class="step-label">Current step: <b id="stepLabel">1 · जरूरी अपडेट</b></div>
+
+  <div class="device">
+    <div class="screen">
+      <button class="pill" id="restart">↻ Restart</button>
+
+      <!-- ── Status bar ── -->
+      <div class="status-bar">
+        <span>9:41</span>
+        <div class="right">
+          <!-- signal -->
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 11h2v3H1zM5 8h2v6H5zM9 5h2v9H9zM13 2h2v12h-2z"/></svg>
+          <!-- wifi -->
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 12.5a1 1 0 100 2 1 1 0 000-2zm3.18-2.71L8 12.97l-3.18-3.18A4.49 4.49 0 018 8.5c1.2 0 2.31.47 3.18 1.29zm2.83-2.83L8 1.66 1.99 6.96a8.49 8.49 0 0112.02 0z"/></svg>
+          <!-- battery -->
+          <svg viewBox="0 0 24 12" fill="currentColor"><rect x="1" y="1" width="20" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.2"/><rect x="22" y="4" width="1.5" height="4" rx=".5"/><rect x="3" y="3" width="14" height="6" rx="1"/></svg>
+        </div>
+      </div>
+
+      <!-- ── Top app bar ── -->
+      <div class="topbar">
+        <div class="menu"><span></span><span></span><span></span></div>
+        <div class="title">होम</div>
+      </div>
+
+      <!-- ── Home body (faded behind sheets) ── -->
+      <div class="home-body">
+        <div class="csp-row">
+          <div class="avatar">R</div>
+          <div>
+            <div class="name">Rajesh Kumar</div>
+            <div class="role">एडमिन · CSP-1042</div>
+          </div>
+        </div>
+        <div class="banner-info">
+          इस महीने ज़्यादा कमाई के लिए <b>Pay-As-You-Go</b> चालू है — हर इंस्टॉल पर ₹30 बेस + क्वालिटी पर बोनस।
+        </div>
+        <div class="task-card">
+          <div class="row1"><span class="type">इंस्टॉल · INS-1100</span><span class="commission">₹500</span></div>
+          <div class="reason">समय का प्रस्ताव दें · 3 दिन बाकी</div>
+        </div>
+        <div class="task-card">
+          <div class="row1"><span class="type">रिस्टोर · RST-9001</span><span class="commission">₹150</span></div>
+          <div class="reason">ग्राहक का इंटरनेट बंद · 2 घंटे बाकी</div>
+        </div>
+        <div class="task-card">
+          <div class="row1"><span class="type">नेटबॉक्स पिकअप · NBP-3001</span><span class="commission">₹100</span></div>
+          <div class="reason">नेटबॉक्स लेने जाएं · आज शाम तक</div>
+        </div>
+      </div>
+
+      <!-- ── Scrim ── -->
+      <div class="scrim" id="scrim"></div>
+
+      <!-- ── Sheet 1 — Important Update ── -->
+      <div class="sheet" id="sheet-update">
+        <div class="body">
+          <h2>जरूरी अपडेट</h2>
+          <p class="body-text">
+            सभी नए कस्टमर्स अब Pay-As-You-Go (PayG) model पर होंगे और नये <a class="inline-link" id="systemLink" href="https://wiom.in/system-overview" target="_blank" rel="noopener noreferrer">सिस्टम के हिसाब से</a> काम करना है
+          </p>
+        </div>
+        <div class="cta-bar">
+          <button class="cta-primary" data-next="thanks">मैं सहमत हूँ</button>
+        </div>
+      </div>
+
+      <!-- ── Sheet 2 — Thanks ── -->
+      <div class="sheet center" id="sheet-thanks">
+        <div class="body">
+          <div class="thanks-tick">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+          </div>
+          <h2>सहमति के लिए धन्यवाद</h2>
+          <p class="body-text">अब आपका रेट कार्ड तैयार किया जा रहा है…</p>
+        </div>
+      </div>
+
+      <!-- ── Sheet 3 — Rate card ready ── -->
+      <div class="sheet center" id="sheet-ratecard">
+        <div class="body">
+          <div class="doc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
+          </div>
+          <h2>आपका रेट कार्ड रेडी है</h2>
+          <p class="body-text">डाउनलोड करके कभी भी देख सकते हैं — हर सेवा का रेट यहीं पर है।</p>
+        </div>
+        <div class="cta-bar">
+          <button class="cta-primary" data-next="lang">डाउनलोड करें</button>
+        </div>
+      </div>
+
+      <!-- ── Dialog — Language picker ── -->
+      <div class="dialog-wrap" id="dialog-lang">
+        <div class="dialog">
+          <div class="glyph-badge"><span class="latin">A</span>&nbsp;<span class="devnagari">अ</span></div>
+          <h3>किस लैंग्वेज में डाक्यूमेंट डाउनलोड करना चाहते हैं ?</h3>
+          <div class="actions">
+            <button class="cta-primary" data-lang="hi">हिन्दी</button>
+            <button class="cta-secondary" data-lang="en">English</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Home download banner ── -->
+      <div class="home-banner" id="homeBanner">
+        <div class="icon" id="bannerIcon"><div class="spinner"></div></div>
+        <span id="bannerText">डॉक्यूमेंट डाउनलोड हो रहा है</span>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  const scrim = document.getElementById('scrim');
+  const sheets = {
+    update:   document.getElementById('sheet-update'),
+    thanks:   document.getElementById('sheet-thanks'),
+    ratecard: document.getElementById('sheet-ratecard'),
+  };
+  const dialogLang = document.getElementById('dialog-lang');
+  const homeBanner = document.getElementById('homeBanner');
+  const bannerIcon = document.getElementById('bannerIcon');
+  const bannerText = document.getElementById('bannerText');
+  const restartBtn = document.getElementById('restart');
+  const stepLabel  = document.getElementById('stepLabel');
+  const ctrlBtns   = document.querySelectorAll('.controls button');
+
+  const labels = {
+    update:   '1 · जरूरी अपडेट',
+    thanks:   '2 · धन्यवाद',
+    ratecard: '3 · रेट कार्ड रेडी',
+    lang:     '4 · भाषा चुनें',
+    done:     '5 · डाउनलोड बैनर',
+  };
+
+  let thanksTimer = null;
+
+  function hideAll() {
+    Object.values(sheets).forEach(s => s.classList.remove('visible'));
+    dialogLang.classList.remove('visible');
+    homeBanner.classList.remove('visible');
+    homeBanner.classList.remove('success');
+    if (thanksTimer) { clearTimeout(thanksTimer); thanksTimer = null; }
+  }
+
+  function setActive(step) {
+    ctrlBtns.forEach(b => b.classList.toggle('active', b.dataset.jump === step));
+    stepLabel.textContent = labels[step];
+    restartBtn.classList.toggle('show', step !== 'update');
+  }
+
+  function show(step) {
+    hideAll();
+    setActive(step);
+    switch (step) {
+      case 'update':
+        scrim.classList.add('visible');
+        sheets.update.classList.add('visible');
+        break;
+      case 'thanks':
+        scrim.classList.add('visible');
+        sheets.thanks.classList.add('visible');
+        // Auto-advance after 1.5s
+        thanksTimer = setTimeout(() => show('ratecard'), 1500);
+        break;
+      case 'ratecard':
+        scrim.classList.add('visible');
+        sheets.ratecard.classList.add('visible');
+        break;
+      case 'lang':
+        scrim.classList.add('visible');
+        dialogLang.classList.add('visible');
+        break;
+      case 'done':
+        // Banner sequence: downloading → success → hide
+        scrim.classList.remove('visible');
+        showBanner('downloading');
+        setTimeout(() => showBanner('success'), 1500);
+        setTimeout(() => {
+          homeBanner.classList.remove('visible');
+          setActive('done');
+        }, 3500);
+        break;
+    }
+  }
+
+  function showBanner(state) {
+    if (state === 'downloading') {
+      homeBanner.classList.remove('success');
+      bannerIcon.innerHTML = '<div class="spinner"></div>';
+      bannerText.textContent = 'डॉक्यूमेंट डाउनलोड हो रहा है';
+    } else {
+      homeBanner.classList.add('success');
+      bannerIcon.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>';
+      bannerText.textContent = 'डॉक्यूमेंट डाउनलोड हो गया है';
+    }
+    homeBanner.classList.add('visible');
+  }
+
+  // Tap-to-advance from CTAs
+  document.querySelectorAll('[data-next]').forEach(btn => {
+    btn.addEventListener('click', () => show(btn.dataset.next));
+  });
+  // Language pick → banner sequence
+  document.querySelectorAll('[data-lang]').forEach(btn => {
+    btn.addEventListener('click', () => show('done'));
+  });
+  // Inline link → opens the system-overview URL in a new tab.
+  // Mirrors the Compose impl which fires ACTION_VIEW with the same URL.
+  const SYSTEM_OVERVIEW_URL = 'https://wiom.in/system-overview';
+  document.getElementById('systemLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    window.open(SYSTEM_OVERVIEW_URL, '_blank', 'noopener,noreferrer');
+  });
+  // Jump buttons
+  ctrlBtns.forEach(btn => btn.addEventListener('click', () => show(btn.dataset.jump)));
+  restartBtn.addEventListener('click', () => show('update'));
+
+  // Boot in step 1
+  show('update');
+</script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Wiom CSP — Prototype Index</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --brand: #D9008D;
+    --bg: #0a0a0a;
+    --surface: #1a1a1a;
+    --stroke: #2a2a2a;
+    --text: #ffffff;
+    --text-sub: rgba(255,255,255,0.55);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; min-height: 100%; background: var(--bg); }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--text);
+    padding: 64px 24px;
+    display: flex;
+    justify-content: center;
+  }
+  .wrap { max-width: 720px; width: 100%; }
+  h1 {
+    font-weight: 600;
+    font-size: 28px;
+    margin: 0 0 8px;
+    letter-spacing: -0.2px;
+  }
+  .sub {
+    color: var(--text-sub);
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 36px;
+  }
+  ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+  li a {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 18px 20px;
+    background: var(--surface);
+    border: 1px solid var(--stroke);
+    border-radius: 16px;
+    color: var(--text);
+    text-decoration: none;
+    transition: border-color .15s, transform .15s;
+  }
+  li a:hover { border-color: var(--brand); transform: translateY(-1px); }
+  li a .name { font-size: 16px; font-weight: 600; }
+  li a .desc { font-size: 13px; color: var(--text-sub); line-height: 1.5; }
+  li a .pr {
+    font-size: 12px;
+    color: var(--brand);
+    font-weight: 600;
+    margin-top: 6px;
+  }
+  footer {
+    margin-top: 48px;
+    font-size: 12px;
+    color: var(--text-sub);
+    line-height: 1.7;
+  }
+  footer a { color: var(--text-sub); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Wiom CSP · Prototypes</h1>
+  <div class="sub">Click-through HTML prototypes for the Wiom CSP Android app. Each one mirrors the corresponding Compose surface — same Wiom DS tokens, same Hindi-first copy, same interactions. Useful for design review without installing the APK.</div>
+
+  <ul>
+    <li>
+      <a href="login-flow.html">
+        <div class="name">Login → OTP flow</div>
+        <div class="desc">Mobile number entry → 6-digit OTP. Shows the CSP ∞ logo PNG on both screens.</div>
+      </a>
+    </li>
+    <li>
+      <a href="permission-page.html">
+        <div class="name">Permission page</div>
+        <div class="desc">FpnPermissionChecker with 4 steps (Notifications · Battery · Display-over-apps · Xiaomi single-CTA). Sequential gating + simulated OS settings dialog.</div>
+        <div class="pr">PR #269</div>
+      </a>
+    </li>
+    <li>
+      <a href="rate-card-blocker.html">
+        <div class="name">Rate Card blocker · first-time PayG flow</div>
+        <div class="desc">4-step home blocker: जरूरी अपडेट → धन्यवाद → रेट कार्ड रेडी → भाषा चुनें. Bottom sheets + centered language dialog + download status banner.</div>
+        <div class="pr">PR #268</div>
+      </a>
+    </li>
+    <li>
+      <a href="rate-card-from-settings.html">
+        <div class="name">Rate Card from Settings</div>
+        <div class="desc">Settings → नियम व दस्तावेज़ → Rate Card → भाषा चुनें → DownloadStatusBar (downloading → success → hide).</div>
+        <div class="pr">PR #268</div>
+      </a>
+    </li>
+    <li>
+      <a href="service-card-kaun-karega.html">
+        <div class="name">Service card · कौन करेगा + IVR code</div>
+        <div class="desc">Restore drilldown with the kaun-karega executor flow (pending / self / team), solo-CSP empty state with "नया मेम्बर जोड़ें", and the IVR verification code line inside संपर्क कैसे करें.</div>
+        <div class="pr">PR #273 (IVR section)</div>
+      </a>
+    </li>
+  </ul>
+
+  <footer>
+    Hosted from <a href="https://github.com/wiom-tech/wiom-csp-prototypes">wiom-tech/wiom-csp-prototypes</a>
+  </footer>
+</div>
+</body>
+</html>

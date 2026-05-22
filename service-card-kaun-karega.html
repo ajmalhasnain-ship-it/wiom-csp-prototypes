@@ -1,0 +1,1164 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Service Card — Kaun Karega Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* ── Wiom tokens (CA DS subset) ─────────────────────────────────── */
+  :root {
+    --brand-primary: #D9008D;
+    --brand-primary-dim: #B8007A;
+    --bg-screen: #F4F4F4;
+    --bg-surface: #FFFFFF;
+    --bg-scrim: rgba(20,20,20,0.45);
+    --bg-info-subtle: #E6F1FB;
+    --bg-positive-subtle: #E6F5EC;
+    --bg-warning-subtle: #FFF4DA;
+    --bg-negative-subtle: #FDE7E7;
+    --bg-brand-subtle: rgba(217,0,141,0.08);
+    --state-info: #1B7FD3;
+    --state-positive: #1E9B4A;
+    --state-warning: #C77700;
+    --state-negative: #C0392B;
+    --text-primary: #141414;
+    --text-secondary: #5C5C5C;
+    --text-hint: #9A9A9A;
+    --text-disabled: #BABABA;
+    --stroke-primary: #E4E4E4;
+    --stroke-subtle: #EDEDED;
+    --radius-card: 12px;
+    --radius-cta: 16px;
+    --radius-dialog: 24px;
+    --radius-pill: 999px;
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 12px;
+    --space-lg: 16px;
+    --space-xl: 24px;
+    --shadow-card: 0 1px 2px rgba(0,0,0,0.04), 0 0 1px rgba(0,0,0,0.06);
+    --shadow-cta-bar: 0 -2px 8px rgba(0,0,0,0.06);
+    --shadow-xl: 0 24px 48px rgba(0,0,0,0.18);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: 'Hind', 'Inter', system-ui, sans-serif;
+    background: linear-gradient(135deg, #2a2a2a, #0a0a0a);
+    color: var(--text-primary);
+    display: grid;
+    place-items: start center;
+    padding: 32px 16px 48px;
+    min-height: 100vh;
+  }
+
+  /* ── Stage header / controls ──────────────────────────────────── */
+  .stage { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .stage h1 {
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 18px;
+    margin: 0;
+  }
+  .stage .subtitle {
+    color: rgba(255,255,255,0.55);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    text-align: center;
+    max-width: 460px;
+    line-height: 1.5;
+  }
+  .controls {
+    display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 4px;
+  }
+  .controls button {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.16);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+  }
+  .controls button:hover { background: rgba(255,255,255,0.14); }
+  .controls button.active { background: var(--brand-primary); border-color: var(--brand-primary); }
+  .step-label {
+    color: rgba(255,255,255,0.55);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+  }
+  .step-label b { color: #fff; font-weight: 600; }
+
+  /* ── Device frame ─────────────────────────────────────────────── */
+  .device {
+    width: 392px;
+    height: 802px;
+    background: #000;
+    border-radius: 44px;
+    padding: 10px;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.5), 0 0 0 2px rgba(255,255,255,0.04) inset;
+    position: relative;
+  }
+  .screen {
+    width: 100%;
+    height: 100%;
+    background: var(--bg-surface);
+    border-radius: 34px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Status bar */
+  .status-bar {
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 22px 0;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-primary);
+    flex-shrink: 0;
+  }
+  .status-bar .right { display: flex; gap: 5px; align-items: center; }
+  .status-bar svg { width: 14px; height: 14px; }
+
+  /* Top bar */
+  .topbar {
+    height: 56px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--stroke-primary);
+    flex-shrink: 0;
+  }
+  .topbar .back {
+    width: 24px; height: 24px;
+    color: var(--text-primary);
+  }
+  .topbar .title { font-size: 18px; font-weight: 600; }
+
+  /* Body scroll */
+  .body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    background: var(--bg-screen);
+  }
+  .body::-webkit-scrollbar { width: 4px; }
+  .body::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 2px; }
+
+  /* ── State banner (§1) ─────────────────────────────────────────── */
+  .state-banner {
+    border-radius: var(--radius-card);
+    padding: 14px;
+    margin-bottom: 12px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .state-banner.warning  { background: var(--bg-warning-subtle); }
+  .state-banner.info     { background: var(--bg-info-subtle); }
+  .state-banner.negative { background: var(--bg-negative-subtle); }
+  .state-banner svg { width: 22px; height: 22px; flex-shrink: 0; margin-top: 1px; }
+  .state-banner.warning  svg { color: var(--state-warning); }
+  .state-banner.info     svg { color: var(--state-info); }
+  .state-banner.negative svg { color: var(--state-negative); }
+  .state-banner .b-title { font-weight: 700; font-size: 15px; margin-bottom: 2px; }
+  .state-banner .b-sub   { font-size: 13px; color: var(--text-primary); line-height: 1.45; }
+
+  /* Section card */
+  .section {
+    background: var(--bg-surface);
+    border: 1px solid var(--stroke-primary);
+    border-radius: var(--radius-card);
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .section-header svg { width: 18px; height: 18px; color: var(--text-secondary); flex-shrink: 0; }
+  .section-header .label { font-weight: 600; font-size: 14px; color: var(--text-primary); }
+  .section-body { padding-left: 0; }
+  .section .row {
+    font-size: 14px; color: var(--text-primary); line-height: 1.5;
+  }
+  .section .row + .row { margin-top: 4px; }
+  .section .hint { font-size: 13px; color: var(--text-hint); }
+
+  .pink-link {
+    color: var(--brand-primary);
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    display: inline-block;
+    padding: 4px 0;
+  }
+  .pink-link:hover { text-decoration: underline; }
+
+  /* IVR verification hint — appears under the call link in §4b
+     when the CSP needs to call from a different phone. The 4-digit
+     code regenerates every drilldown open so it's a fresh shared
+     secret per session. */
+  .ivr-hint {
+    margin-top: 6px;
+    line-height: 1.5;
+  }
+  .ivr-text {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .ivr-code {
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: 0.5px;
+  }
+
+  .pink-prompt {
+    color: var(--brand-primary);
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    padding: 8px 0;
+    display: inline-block;
+  }
+  .pink-prompt:hover { opacity: 0.85; }
+
+  /* Timeline */
+  .timeline-event {
+    display: flex;
+    gap: 12px;
+    padding: 4px 0;
+  }
+  .timeline-event .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--brand-primary);
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+  .timeline-event .time { font-size: 12px; color: var(--text-hint); }
+  .timeline-event .desc { font-size: 14px; color: var(--text-primary); }
+
+  /* Executor row */
+  .executor-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .executor-row .name { font-weight: 600; font-size: 15px; flex: 1; }
+  .icon-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--bg-brand-subtle);
+    display: grid; place-items: center;
+    cursor: pointer;
+    color: var(--brand-primary);
+    border: none;
+  }
+  .icon-btn svg { width: 18px; height: 18px; }
+  .icon-btn:hover { background: rgba(217,0,141,0.15); }
+
+  /* CTA bar */
+  .cta-bar {
+    padding: 14px 16px 18px;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--stroke-primary);
+    flex-shrink: 0;
+  }
+  button.cta-primary {
+    width: 100%;
+    height: 48px;
+    background: var(--brand-primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-cta);
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  button.cta-primary:hover:not(:disabled) { background: var(--brand-primary-dim); }
+  button.cta-primary:disabled {
+    background: #EBEBEB;
+    color: var(--text-disabled);
+    cursor: not-allowed;
+  }
+  button.cta-secondary {
+    width: 100%;
+    height: 48px;
+    background: transparent;
+    color: var(--brand-primary);
+    border: 1px solid var(--brand-primary);
+    border-radius: var(--radius-cta);
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  button.cta-secondary:hover { background: rgba(217,0,141,0.05); }
+
+  /* Three-dot overflow on top bar */
+  .topbar .spacer { flex: 1; }
+  .topbar .menu-trigger {
+    width: 32px; height: 32px;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    cursor: pointer;
+    color: var(--text-primary);
+  }
+  .topbar .menu-trigger:hover { background: var(--bg-screen); }
+  .topbar .menu-trigger svg { width: 22px; height: 22px; }
+
+  /* Scrim */
+  .scrim {
+    position: absolute;
+    inset: 0;
+    background: var(--bg-scrim);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s ease;
+    z-index: 5;
+  }
+  .scrim.visible { opacity: 1; pointer-events: auto; }
+
+  /* Bottom sheet shell */
+  .sheet {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    background: var(--bg-surface);
+    border-radius: 20px 20px 0 0;
+    transform: translateY(110%);
+    transition: transform .35s cubic-bezier(.22,1,.36,1);
+    z-index: 10;
+    max-height: 80%;
+    display: flex;
+    flex-direction: column;
+  }
+  .sheet.visible { transform: translateY(0); }
+  .sheet-handle {
+    width: 40px; height: 4px;
+    background: var(--stroke-primary);
+    border-radius: 999px;
+    margin: 10px auto 4px;
+    flex-shrink: 0;
+  }
+  .sheet-title {
+    text-align: center;
+    font-weight: 700;
+    font-size: 18px;
+    padding: 14px 24px 8px;
+    color: var(--text-primary);
+  }
+  .sheet-subtitle {
+    text-align: center;
+    font-size: 14px;
+    color: var(--text-secondary);
+    padding: 0 24px 18px;
+    line-height: 1.5;
+  }
+  .sheet-body {
+    overflow-y: auto;
+    padding: 8px 16px 12px;
+  }
+
+  /* Executor list rows in sheet */
+  .exec-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px;
+    border-radius: var(--radius-card);
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .exec-row:hover { background: var(--bg-screen); }
+  .exec-row .avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--bg-brand-subtle);
+    color: var(--brand-primary);
+    display: grid; place-items: center;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+    flex-shrink: 0;
+  }
+  .exec-row .name { font-weight: 600; font-size: 15px; flex: 1; }
+  .exec-row .chev { color: var(--text-hint); }
+
+  .self-row .avatar {
+    background: var(--brand-primary);
+    color: #fff;
+  }
+  .self-row .name { font-weight: 700; }
+
+  /* Sheet CTA area */
+  .sheet-cta {
+    padding: 12px 16px 20px;
+    border-top: 1px solid var(--stroke-subtle);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Overflow menu */
+  .overflow-menu {
+    position: absolute;
+    top: 84px;
+    right: 16px;
+    background: var(--bg-surface);
+    border-radius: 12px;
+    box-shadow: var(--shadow-xl);
+    min-width: 200px;
+    overflow: hidden;
+    z-index: 12;
+    opacity: 0;
+    transform: translateY(-6px) scale(0.95);
+    pointer-events: none;
+    transition: opacity .15s, transform .15s;
+  }
+  .overflow-menu.visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+  .overflow-menu .item {
+    padding: 14px 16px;
+    font-size: 14px;
+    color: var(--text-primary);
+    cursor: pointer;
+    border-bottom: 1px solid var(--stroke-subtle);
+  }
+  .overflow-menu .item:last-child { border-bottom: none; }
+  .overflow-menu .item:hover { background: var(--bg-screen); }
+
+  /* Team list row inside §6b */
+  .team-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+  }
+  .team-row + .team-row {
+    border-top: 1px solid var(--stroke-subtle);
+  }
+  .team-row .avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--bg-brand-subtle);
+    color: var(--brand-primary);
+    display: grid; place-items: center;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .team-row .info { flex: 1; min-width: 0; }
+  .team-row .name {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-primary);
+  }
+  .team-row .meta {
+    font-size: 12px;
+    color: var(--text-hint);
+    margin-top: 2px;
+  }
+  .team-row .new-tag {
+    background: var(--bg-positive-subtle);
+    color: var(--state-positive);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 999px;
+    flex-shrink: 0;
+  }
+
+  /* ── Add Team Member page (slides over the drilldown) ─────────────── */
+  .add-page {
+    position: absolute;
+    inset: 0;
+    background: var(--bg-screen);
+    z-index: 14;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform .3s cubic-bezier(.22,1,.36,1);
+  }
+  .add-page.visible { transform: translateX(0); }
+  .form-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: 12px 0 6px;
+  }
+  .form-label:first-child { margin-top: 0; }
+  .form-input {
+    width: 100%;
+    height: 48px;
+    padding: 0 14px;
+    border: 1px solid var(--stroke-primary);
+    border-radius: var(--radius-card);
+    background: var(--bg-surface);
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color .15s;
+  }
+  .form-input:focus { border-color: var(--brand-primary); }
+  .form-input::placeholder { color: var(--text-hint); }
+  .form-hint {
+    font-size: 13px;
+    color: var(--text-hint);
+    margin-top: 14px;
+    line-height: 1.5;
+  }
+
+  /* Floating toast */
+  .toast {
+    position: absolute;
+    left: 16px; right: 16px;
+    bottom: 110px;
+    background: rgba(20,20,20,0.92);
+    color: #fff;
+    border-radius: var(--radius-card);
+    padding: 12px 16px;
+    font-size: 14px;
+    text-align: center;
+    z-index: 20;
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: opacity .2s, transform .2s;
+  }
+  .toast.visible { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+<div class="stage">
+  <h1>Service / Restore Drilldown · कौन करेगा फ़्लो</h1>
+  <div class="subtitle">
+    Click the pink <b>"टीम मेम्बर चुनें"</b> in §6 to open the executor sheet. Pick <b>"मैं खुद करूँगा"</b> for the self path (CTA = <b>रिज़ॉल्व हो गया</b>) or <b>Binod</b> for the team path (no primary CTA — resolve via 3-dot overflow). The state badge, timeline, executor row and CTA all morph in lockstep.
+  </div>
+
+  <div class="controls">
+    <button data-jump="pending">1 · टीम मेम्बर चुनें</button>
+    <button data-jump="self">2 · मैं खुद · रिज़ॉल्व हो गया</button>
+    <button data-jump="team">3 · Binod को भेजा</button>
+    <button data-jump="picker">↕ Open executor sheet</button>
+    <button data-jump="resolve">↕ Open resolve sheet (self)</button>
+  </div>
+  <div class="controls" style="margin-top:2px;">
+    <button data-mode="team" class="active">CSP mode: टीम वाला</button>
+    <button data-mode="solo">CSP mode: अकेले काम करता है</button>
+  </div>
+  <div class="step-label">Current state: <b id="stepLabel">PENDING_ACCEPTANCE</b></div>
+
+  <div class="device">
+    <div class="screen">
+      <!-- Status bar -->
+      <div class="status-bar">
+        <span>9:41</span>
+        <div class="right">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 11h2v3H1zM5 8h2v6H5zM9 5h2v9H9zM13 2h2v12h-2z"/></svg>
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 12.5a1 1 0 100 2 1 1 0 000-2zm3.18-2.71L8 12.97l-3.18-3.18A4.49 4.49 0 018 8.5c1.2 0 2.31.47 3.18 1.29zm2.83-2.83L8 1.66 1.99 6.96a8.49 8.49 0 0112.02 0z"/></svg>
+          <svg viewBox="0 0 24 12" fill="currentColor"><rect x="1" y="1" width="20" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.2"/><rect x="22" y="4" width="1.5" height="4" rx=".5"/><rect x="3" y="3" width="14" height="6" rx="1"/></svg>
+        </div>
+      </div>
+
+      <!-- Top bar -->
+      <div class="topbar">
+        <svg class="back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        <div class="title">रिस्टोर · RST-9001</div>
+        <div class="spacer"></div>
+        <div class="menu-trigger" id="overflowTrigger">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="body">
+        <!-- §1 State banner -->
+        <div class="state-banner" id="stateBanner">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="stateBannerIcon"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <div>
+            <div class="b-title" id="stateBannerTitle">अभी जवाब दो</div>
+            <div class="b-sub" id="stateBannerSub">ग्राहक का इंटरनेट बंद है · 2 घंटे बाकी</div>
+          </div>
+        </div>
+
+        <!-- §2 Updates / Timeline -->
+        <div class="section">
+          <div class="section-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            <div class="label">अपडेट्स</div>
+          </div>
+          <div id="timeline">
+            <!-- filled by JS -->
+          </div>
+        </div>
+
+        <!-- §3 Briefing -->
+        <div class="section">
+          <div class="section-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <div class="label">क्या हुआ है?</div>
+          </div>
+          <div class="section-body">
+            <div class="row">ग्राहक का इंटरनेट बंद हो गया है (NO_INTERNET)।</div>
+          </div>
+        </div>
+
+        <!-- §4 Location -->
+        <div class="section">
+          <div class="section-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <div class="label">कहाँ जाना है?</div>
+          </div>
+          <div class="section-body">
+            <div class="row">H.No. 12, Sector 8, Gurugram, Haryana 122001</div>
+            <a class="pink-link">मैप पर देखें</a>
+          </div>
+        </div>
+
+        <!-- §4b Contact -->
+        <div class="section">
+          <div class="section-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.37 1.9.72 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.91.35 1.85.59 2.81.72A2 2 0 0122 16.92z"/></svg>
+            <div class="label">संपर्क कैसे करें?</div>
+          </div>
+          <div class="section-body">
+            <div class="ivr-hint">
+              <span class="ivr-text">कॅल में पूछे जाने पर यह कोड डालें - <span class="ivr-code" id="ivrCode">195482</span></span>
+            </div>
+            <a class="pink-link">आप कॉल कर सकते हैं</a>
+          </div>
+        </div>
+
+        <!-- §4c Connection details -->
+        <div class="section">
+          <div class="section-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="12" x2="6" y2="12"/><line x1="10" y1="12" x2="10" y2="12"/></svg>
+            <div class="label">कनेक्शन की जानकारी</div>
+          </div>
+          <div class="section-body">
+            <div class="row"><b>डिवाइस आईडी:</b> GX-1042</div>
+            <div class="row"><b>ISP यूज़रनेम:</b> conn7421@wiom</div>
+            <div class="row"><b>कनेक्शन:</b> CONN-7421</div>
+          </div>
+        </div>
+
+        <!-- §5 Schedule -->
+        <div class="section">
+          <div class="section-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <div class="label">कब तक करना है?</div>
+          </div>
+          <div class="section-body">
+            <div class="row">2 घंटे बाकी · डेडलाइन 4:05 PM</div>
+          </div>
+        </div>
+
+        <!-- §6 Executor — the kaun-karega section -->
+        <div class="section">
+          <div class="section-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <div class="label">कौन करेगा?</div>
+          </div>
+          <div class="section-body" id="executorBody">
+            <!-- Filled by JS — either pink prompt or executor row -->
+          </div>
+        </div>
+
+        <!-- §6b My team — appears only after the solo CSP adds members. -->
+        <div class="section" id="teamSection" style="display:none;">
+          <div class="section-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+            <div class="label">मेरी टीम</div>
+          </div>
+          <div class="section-body" id="teamList">
+            <!-- Filled by JS — list of added members -->
+          </div>
+        </div>
+
+        <div style="height: 16px;"></div>
+      </div>
+
+      <!-- CTA bar -->
+      <div class="cta-bar" id="ctaBar">
+        <!-- Filled by JS -->
+      </div>
+
+      <!-- ── Scrim ── -->
+      <div class="scrim" id="scrim"></div>
+
+      <!-- ── Executor picker sheet ── -->
+      <div class="sheet" id="sheet-picker">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">कौन करेगा?</div>
+        <div class="sheet-subtitle">अपने आप करेंगे या टीम मेम्बर भेजेंगे?</div>
+        <div class="sheet-body">
+          <div class="exec-row self-row" data-pick="self">
+            <div class="avatar">मैं</div>
+            <div class="name">मैं खुद करूँगा</div>
+            <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+          <div class="exec-row" data-pick="binod">
+            <div class="avatar">B</div>
+            <div class="name">Binod</div>
+            <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+          <div class="exec-row" data-pick="suresh">
+            <div class="avatar">S</div>
+            <div class="name">Suresh</div>
+            <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+          <div class="exec-row" data-pick="rakesh">
+            <div class="avatar">R</div>
+            <div class="name">Rakesh</div>
+            <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Resolve confirm sheet ── -->
+      <div class="sheet" id="sheet-resolve">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title" id="resolveTitle">क्या इंटरनेट बंद का इश्यू ठीक हो गया?</div>
+        <div class="sheet-subtitle" id="resolveSubtitle">इंटरनेट चालू है — कस्टमर ने confirm किया है। नीचे tap करके resolve करें।</div>
+        <div class="sheet-cta">
+          <button class="cta-primary" id="resolveYes">हाँ, ठीक हो गया</button>
+        </div>
+      </div>
+
+      <!-- ── Overflow menu ── -->
+      <div class="overflow-menu" id="overflowMenu">
+        <div class="item" id="overflowResolve">रिज़ॉल्व हो गया</div>
+        <div class="item">सहायता चाहिए</div>
+      </div>
+
+      <!-- ── Toast ── -->
+      <div class="toast" id="toast"></div>
+
+      <!-- ── Add Team Member page (slides in from right) ── -->
+      <div class="add-page" id="addPage">
+        <div class="status-bar">
+          <span>9:41</span>
+          <div class="right">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 11h2v3H1zM5 8h2v6H5zM9 5h2v9H9zM13 2h2v12h-2z"/></svg>
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 12.5a1 1 0 100 2 1 1 0 000-2zm3.18-2.71L8 12.97l-3.18-3.18A4.49 4.49 0 018 8.5c1.2 0 2.31.47 3.18 1.29zm2.83-2.83L8 1.66 1.99 6.96a8.49 8.49 0 0112.02 0z"/></svg>
+            <svg viewBox="0 0 24 12" fill="currentColor"><rect x="1" y="1" width="20" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.2"/><rect x="22" y="4" width="1.5" height="4" rx=".5"/><rect x="3" y="3" width="14" height="6" rx="1"/></svg>
+          </div>
+        </div>
+        <div class="topbar">
+          <svg class="back" id="addPageBack" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="cursor:pointer;"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          <div class="title">नया मेम्बर जोड़ें</div>
+        </div>
+        <div class="body" style="padding:20px 16px;">
+          <div class="form-label">मेम्बर का नाम</div>
+          <input type="text" id="memberName" class="form-input" placeholder="जैसे: Binod" />
+          <div class="form-label">मोबाइल नंबर</div>
+          <input type="tel" id="memberPhone" class="form-input" placeholder="10 अंकों का नंबर" maxlength="10" />
+          <div class="form-hint">मेम्बर को SMS पर invite link जाएगा। जोड़ने के बाद यह आपकी टीम में दिखेंगे।</div>
+        </div>
+        <div class="cta-bar">
+          <button class="cta-primary" id="addPageSave">जोड़ें</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ─── State + DOM refs ───────────────────────────────────────────── */
+  const scrim          = document.getElementById('scrim');
+  const sheetPicker    = document.getElementById('sheet-picker');
+  const sheetResolve   = document.getElementById('sheet-resolve');
+  const overflowMenu   = document.getElementById('overflowMenu');
+  const overflowTrigger= document.getElementById('overflowTrigger');
+  const overflowResolve= document.getElementById('overflowResolve');
+  const executorBody   = document.getElementById('executorBody');
+  const ctaBar         = document.getElementById('ctaBar');
+  const stateBanner    = document.getElementById('stateBanner');
+  const stateBannerTitle = document.getElementById('stateBannerTitle');
+  const stateBannerSub = document.getElementById('stateBannerSub');
+  const stateBannerIcon= document.getElementById('stateBannerIcon');
+  const timeline       = document.getElementById('timeline');
+  const stepLabel      = document.getElementById('stepLabel');
+  const ctrlBtns       = document.querySelectorAll('.controls button');
+  const resolveTitle   = document.getElementById('resolveTitle');
+  const resolveSubtitle= document.getElementById('resolveSubtitle');
+  const toast          = document.getElementById('toast');
+  const resolveYes     = document.getElementById('resolveYes');
+
+  const bodyScroll = document.querySelector('.body');
+  let state = 'pending';   // pending | self | team
+  let cspMode = 'team';    // team (has team members) | solo (works alone)
+  // Members added by the solo CSP from the "+ नया मेम्बर जोड़ें" page.
+  // First entry is the most recent — used to drive the "नया" tag in §6b.
+  let addedMembers = [];   // [{ name, phone, addedAt }]
+
+  /* ─── State renderers ────────────────────────────────────────────── */
+  function renderBanner() {
+    if (state === 'pending') {
+      stateBanner.classList.remove('info'); stateBanner.classList.add('warning');
+      stateBannerTitle.textContent = 'अभी जवाब दो';
+      stateBannerSub.textContent = 'ग्राहक का इंटरनेट बंद है · 2 घंटे बाकी';
+    } else if (state === 'self') {
+      stateBanner.classList.remove('warning'); stateBanner.classList.add('info');
+      stateBannerTitle.textContent = 'आपने यह काम लिया';
+      stateBannerSub.textContent = 'आगे बढ़कर इश्यू ठीक करें — फिर "रिज़ॉल्व हो गया" tap करें';
+    } else if (state === 'team') {
+      stateBanner.classList.remove('warning'); stateBanner.classList.add('info');
+      stateBannerTitle.textContent = 'Binod को भेज दिया';
+      stateBannerSub.textContent = 'टीम मेम्बर के पहुँचने का इंतज़ार है';
+    }
+  }
+
+  function renderTimeline() {
+    const baseEvents = [
+      { time: '12:05 PM', desc: 'टास्क मिला' },
+    ];
+    if (state === 'self') {
+      baseEvents.push({ time: 'अभी', desc: 'मैंने यह काम लिया' });
+    } else if (state === 'team') {
+      baseEvents.push({ time: '12:08 PM', desc: 'मैंने यह काम लिया' });
+      baseEvents.push({ time: 'अभी', desc: 'Binod को भेजा गया' });
+    }
+    timeline.innerHTML = baseEvents.reverse().map(e => `
+      <div class="timeline-event">
+        <div class="dot"></div>
+        <div>
+          <div class="time">${e.time}</div>
+          <div class="desc">${e.desc}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderExecutor() {
+    if (state === 'pending') {
+      if (cspMode === 'solo') {
+        // Solo CSP — empty team. The §6 body becomes a plain empty-state
+        // line; no self-assign option here. The only forward path is via
+        // the bottom CTA "+ नया मेम्बर जोड़ें", which routes to the
+        // Team Manager screen, then returns to this drilldown.
+        executorBody.innerHTML = `
+          <div class="row" style="color:var(--text-secondary);">अभी आपकी टीम में कोई नहीं है</div>
+        `;
+      } else {
+        executorBody.innerHTML = `
+          <div class="pink-prompt" id="pickPrompt">टीम मेम्बर चुनें</div>
+        `;
+        document.getElementById('pickPrompt').addEventListener('click', openPicker);
+      }
+    } else if (state === 'self') {
+      // बदलें link only when there's a team to swap to.
+      const changeLink = cspMode === 'team'
+        ? `<a class="pink-link" id="changeLink">बदलें</a>`
+        : `<span class="hint" style="font-size:12px;color:var(--text-hint);">अकेले मोड</span>`;
+      executorBody.innerHTML = `
+        <div class="executor-row">
+          <div class="name">मैं</div>
+          ${changeLink}
+        </div>
+      `;
+      const link = document.getElementById('changeLink');
+      if (link) link.addEventListener('click', openPicker);
+    } else if (state === 'team') {
+      executorBody.innerHTML = `
+        <div class="executor-row">
+          <div class="name">Binod</div>
+          <a class="pink-link" id="changeLink">बदलें</a>
+          <button class="icon-btn" title="कॉल करें">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.37 1.9.72 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.91.35 1.85.59 2.81.72A2 2 0 0122 16.92z"/></svg>
+          </button>
+        </div>
+      `;
+      document.getElementById('changeLink').addEventListener('click', openPicker);
+    }
+  }
+
+  function renderCta() {
+    if (state === 'pending') {
+      if (cspMode === 'solo') {
+        // Solo path: §6 explains why there's no executor. The only forward
+        // path is to add a team member via the Team Manager screen — after
+        // saving, the user lands back here and §6 swaps to the picker.
+        ctaBar.innerHTML = `<button class="cta-primary" id="addMemberCta">+ नया मेम्बर जोड़ें</button>`;
+        document.getElementById('addMemberCta').addEventListener('click', openAddPage);
+      } else {
+        ctaBar.innerHTML = `<button class="cta-primary" disabled>टीम को भेजें</button>`;
+      }
+    } else if (state === 'self') {
+      ctaBar.innerHTML = `<button class="cta-primary" id="resolveCta">रिज़ॉल्व हो गया</button>`;
+      document.getElementById('resolveCta').addEventListener('click', () => openResolve('self'));
+    } else if (state === 'team') {
+      // No primary CTA when delegated — resolve lives in overflow.
+      ctaBar.innerHTML = `
+        <div style="text-align:center;font-size:13px;color:var(--text-hint);padding:14px 0;">
+          Binod के काम पूरा करने का इंतज़ार है · ⋮ menu से resolve करें
+        </div>
+      `;
+    }
+  }
+
+  function setStep(label) {
+    stepLabel.textContent = label;
+  }
+
+  function renderTeam() {
+    const teamSection = document.getElementById('teamSection');
+    const teamList = document.getElementById('teamList');
+    if (addedMembers.length === 0) {
+      teamSection.style.display = 'none';
+      return;
+    }
+    teamSection.style.display = 'block';
+    teamList.innerHTML = addedMembers.map((m, idx) => {
+      const initial = m.name.charAt(0).toUpperCase();
+      const isLatest = idx === 0;
+      return `
+        <div class="team-row">
+          <div class="avatar">${initial}</div>
+          <div class="info">
+            <div class="name">${m.name}</div>
+            <div class="meta">${m.phone || 'फ़ोन नंबर नहीं'} · अभी जोड़े गए</div>
+          </div>
+          ${isLatest ? `<div class="new-tag">नया</div>` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  function rollIvrCode() {
+    // 6-digit verification code regenerated on every render — mirrors what
+    // the IVR backend will issue per drilldown open.
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    document.getElementById('ivrCode').textContent = code;
+  }
+
+  function render() {
+    renderBanner();
+    renderTimeline();
+    renderExecutor();
+    renderTeam();
+    renderCta();
+    rollIvrCode();
+    if (state === 'pending') setStep('PENDING_ACCEPTANCE');
+    if (state === 'self')    setStep('ACCEPTED · self assigned');
+    if (state === 'team')    setStep('ACCEPTED · team (Binod)');
+  }
+
+  /* ─── Add Team Member page ──────────────────────────────────────── */
+  const addPage     = document.getElementById('addPage');
+  const memberName  = document.getElementById('memberName');
+  const memberPhone = document.getElementById('memberPhone');
+
+  function openAddPage() {
+    memberName.value = '';
+    memberPhone.value = '';
+    addPage.classList.add('visible');
+    setTimeout(() => memberName.focus(), 320);
+  }
+  function closeAddPage() {
+    addPage.classList.remove('visible');
+  }
+  document.getElementById('addPageBack').addEventListener('click', closeAddPage);
+  document.getElementById('addPageSave').addEventListener('click', () => {
+    const name  = (memberName.value || 'Ramesh').trim();
+    const phone = (memberPhone.value || '').trim();
+    closeAddPage();
+    // Record the new member for §6b "मेरी टीम" (most recent first), append
+    // to the picker sheet so they're pickable immediately, and flip mode to
+    // "team" so §6 swaps to the pink prompt.
+    addedMembers.unshift({
+      name,
+      phone: phone ? phone.replace(/(\d{2})(\d{4})(\d{3})/, '$1XX XXX $3').slice(0, 12) : '',
+      addedAt: Date.now(),
+    });
+    appendMemberToPicker(name);
+    cspMode = 'team';
+    document.querySelectorAll('[data-mode]').forEach(b =>
+      b.classList.toggle('active', b.dataset.mode === cspMode)
+    );
+    render();
+    scrollBodyToTop();
+    showToast(`${name} टीम में जुड़ गए`);
+  });
+
+  function appendMemberToPicker(name) {
+    // Avoid duplicates
+    const exists = Array.from(sheetPicker.querySelectorAll('.exec-row .name'))
+      .some(el => el.textContent.trim() === name);
+    if (exists) return;
+    const sheetBody = sheetPicker.querySelector('.sheet-body');
+    const initial = name.charAt(0).toUpperCase();
+    const row = document.createElement('div');
+    row.className = 'exec-row';
+    row.dataset.pick = name.toLowerCase();
+    row.innerHTML = `
+      <div class="avatar">${initial}</div>
+      <div class="name">${name}</div>
+      <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    `;
+    row.addEventListener('click', () => {
+      hideAllSheets();
+      state = 'team';
+      render();
+      scrollBodyToTop();
+      showToast(`${name} को भेजा गया`);
+    });
+    sheetBody.appendChild(row);
+  }
+
+  function scrollBodyToTop() {
+    // Mirrors RestoreDrilldownContent's LaunchedEffect: after a state morph
+    // (unseenCount bump), the scroll position resets to the top so the user
+    // sees the new banner + timeline event without manually scrolling.
+    bodyScroll.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /* ─── Sheet helpers ──────────────────────────────────────────────── */
+  function hideAllSheets() {
+    sheetPicker.classList.remove('visible');
+    sheetResolve.classList.remove('visible');
+    overflowMenu.classList.remove('visible');
+    scrim.classList.remove('visible');
+  }
+  function openPicker() {
+    hideAllSheets();
+    scrim.classList.add('visible');
+    sheetPicker.classList.add('visible');
+  }
+  function openResolve(variant) {
+    hideAllSheets();
+    if (variant === 'self') {
+      resolveTitle.textContent = 'क्या इंटरनेट बंद का इश्यू ठीक हो गया?';
+      resolveSubtitle.textContent = 'आपने ग्राहक का इंटरनेट चालू कर दिया है — confirm करने के लिए नीचे tap करें।';
+    } else {
+      resolveTitle.textContent = 'क्या Binod ने इश्यू ठीक कर दिया?';
+      resolveSubtitle.textContent = 'टीम मेम्बर ने काम पूरा कर लिया है तो resolve करें।';
+    }
+    scrim.classList.add('visible');
+    sheetResolve.classList.add('visible');
+  }
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('visible');
+    setTimeout(() => toast.classList.remove('visible'), 1800);
+  }
+
+  /* ─── Wiring ──────────────────────────────────────────────────────── */
+  // Scrim tap dismisses sheets
+  scrim.addEventListener('click', hideAllSheets);
+
+  // Executor sheet picks
+  sheetPicker.querySelectorAll('[data-pick]').forEach(row => {
+    row.addEventListener('click', () => {
+      const who = row.dataset.pick;
+      hideAllSheets();
+      if (who === 'self') {
+        state = 'self';
+        render();
+        scrollBodyToTop();
+        showToast('मैंने यह काम लिया');
+      } else {
+        state = 'team';
+        const name = row.querySelector('.name').textContent;
+        render();
+        scrollBodyToTop();
+        showToast(`${name} को भेजा गया`);
+      }
+    });
+  });
+
+  // Resolve sheet CTA → toast + reset to pending
+  resolveYes.addEventListener('click', () => {
+    hideAllSheets();
+    showToast('रिज़ॉल्व कर दिया गया · आपकी कमाई जुड़ गई');
+  });
+
+  // Overflow trigger
+  overflowTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    overflowMenu.classList.toggle('visible');
+  });
+  document.addEventListener('click', (e) => {
+    if (!overflowMenu.contains(e.target) && !overflowTrigger.contains(e.target)) {
+      overflowMenu.classList.remove('visible');
+    }
+  });
+  overflowResolve.addEventListener('click', () => {
+    overflowMenu.classList.remove('visible');
+    if (state === 'team') openResolve('team');
+    else if (state === 'self') openResolve('self');
+    else showToast('पहले team member या self चुनें');
+  });
+
+  // Stage jump controls
+  document.querySelectorAll('[data-jump]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const step = btn.dataset.jump;
+      ctrlBtns.forEach(b => b.classList.toggle('active', b === btn));
+      switch (step) {
+        case 'pending':
+          hideAllSheets(); state = 'pending'; render(); break;
+        case 'self':
+          hideAllSheets(); state = 'self'; render(); break;
+        case 'team':
+          hideAllSheets(); state = 'team'; render(); break;
+        case 'picker':
+          openPicker(); break;
+        case 'resolve':
+          state = state === 'pending' ? 'self' : state;
+          render();
+          openResolve(state === 'team' ? 'team' : 'self');
+          break;
+      }
+    });
+  });
+
+  // CSP mode toggle (team vs solo)
+  document.querySelectorAll('[data-mode]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      cspMode = btn.dataset.mode;
+      document.querySelectorAll('[data-mode]').forEach(b =>
+        b.classList.toggle('active', b.dataset.mode === cspMode)
+      );
+      // Reset to pending so the new mode's prompt is visible from the top.
+      state = 'pending';
+      // Flipping back to solo clears the just-added members so the empty
+      // state can be inspected from scratch.
+      if (cspMode === 'solo') addedMembers = [];
+      hideAllSheets();
+      render();
+      scrollBodyToTop();
+      // Reset jump-step pill highlight to step 1.
+      document.querySelectorAll('[data-jump]').forEach(b => b.classList.remove('active'));
+      document.querySelector('[data-jump="pending"]').classList.add('active');
+    });
+  });
+
+  // Boot
+  render();
+  document.querySelector('[data-jump="pending"]').classList.add('active');
+</script>
+</body>
+</html>
