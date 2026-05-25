@@ -855,13 +855,18 @@
   function renderExecutor() {
     if (state === 'pending') {
       if (cspMode === 'solo') {
-        // Solo CSP — empty team. The §6 body becomes a plain empty-state
-        // line; no self-assign option here. The only forward path is via
-        // the bottom CTA "+ नया मेम्बर जोड़ें", which routes to the
-        // Team Manager screen, then returns to this drilldown.
+        // Solo CSP — empty team. Primary intent (do it yourself) lives
+        // on the pink §6 prompt — tap to self-assign. The bottom CTA
+        // "+ नया मेम्बर जोड़ें" remains the recruitment hook (unchanged).
         executorBody.innerHTML = `
-          <div class="row" style="color:var(--text-secondary);">अभी आपकी टीम में कोई नहीं है</div>
+          <div class="pink-prompt" id="pickPrompt">मैं करूँगा</div>
         `;
+        document.getElementById('pickPrompt').addEventListener('click', () => {
+          state = 'self';
+          render();
+          scrollBodyToTop();
+          showToast('मैंने यह काम लिया');
+        });
       } else {
         executorBody.innerHTML = `
           <div class="pink-prompt" id="pickPrompt">टीम मेम्बर चुनें</div>
@@ -869,16 +874,20 @@
         document.getElementById('pickPrompt').addEventListener('click', openPicker);
       }
     } else if (state === 'self') {
-      // बदलें link only when there's a team to swap to.
-      const changeLink = cspMode === 'team'
+      // Team mode: बदलें swaps to a team member via the executor sheet.
+      // Solo mode: "मेम्बर जोड़ें" link replaces the old "अकेले मोड" hint —
+      // taps the add-member page so a solo CSP can graduate out of solo.
+      const trailing = cspMode === 'team'
         ? `<a class="pink-link" id="changeLink">बदलें</a>`
-        : `<span class="hint" style="font-size:12px;color:var(--text-hint);">अकेले मोड</span>`;
+        : `<a class="pink-link" id="addMemberInline">मेम्बर जोड़ें</a>`;
       executorBody.innerHTML = `
         <div class="executor-row">
           <div class="name">मैं</div>
-          ${changeLink}
+          ${trailing}
         </div>
       `;
+      const addInline = document.getElementById('addMemberInline');
+      if (addInline) addInline.addEventListener('click', openAddPage);
       const link = document.getElementById('changeLink');
       if (link) link.addEventListener('click', openPicker);
     } else if (state === 'team') {
