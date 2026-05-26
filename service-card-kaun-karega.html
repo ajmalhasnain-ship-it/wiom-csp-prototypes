@@ -709,32 +709,15 @@
       <div class="scrim" id="scrim"></div>
 
       <!-- ── Executor picker sheet ── -->
+      <!-- Body is populated dynamically by JS (openPicker → renderPickerBody)
+           so the visible rows match the CSP mode + session-added state.
+           Solo: only self + session-added + "+ नया जोड़ें".
+           Team: full roster + self + "+ नया जोड़ें". -->
       <div class="sheet" id="sheet-picker">
         <div class="sheet-handle"></div>
         <div class="sheet-title">कौन करेगा?</div>
-        <div class="sheet-subtitle">अपने आप करेंगे या टीम मेम्बर भेजेंगे?</div>
-        <div class="sheet-body">
-          <div class="exec-row self-row" data-pick="self">
-            <div class="avatar">मैं</div>
-            <div class="name">मैं खुद करूँगा</div>
-            <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-          </div>
-          <div class="exec-row" data-pick="binod">
-            <div class="avatar">B</div>
-            <div class="name">Binod</div>
-            <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-          </div>
-          <div class="exec-row" data-pick="suresh">
-            <div class="avatar">S</div>
-            <div class="name">Suresh</div>
-            <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-          </div>
-          <div class="exec-row" data-pick="rakesh">
-            <div class="avatar">R</div>
-            <div class="name">Rakesh</div>
-            <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-          </div>
-        </div>
+        <div class="sheet-subtitle" id="pickerSubtitle">अपने आप करेंगे या टीम मेम्बर भेजेंगे?</div>
+        <div class="sheet-body" id="pickerBody"></div>
       </div>
 
       <!-- ── Resolve confirm sheet ── -->
@@ -994,48 +977,19 @@
     const name  = (memberName.value || 'Ramesh').trim();
     const phone = (memberPhone.value || '').trim();
     closeAddPage();
-    // Record the new member for §6b "मेरी टीम" (most recent first), append
-    // to the picker sheet so they're pickable immediately, and flip mode to
-    // "team" so §6 swaps to the pink prompt.
+    // Track the just-added member. The picker will pick them up via
+    // renderPickerBody() the next time it opens.
     addedMembers.unshift({
       name,
       phone: phone ? phone.replace(/(\d{2})(\d{4})(\d{3})/, '$1XX XXX $3').slice(0, 12) : '',
       addedAt: Date.now(),
     });
-    appendMemberToPicker(name);
-    cspMode = 'team';
-    document.querySelectorAll('[data-mode]').forEach(b =>
-      b.classList.toggle('active', b.dataset.mode === cspMode)
-    );
-    render();
-    scrollBodyToTop();
+    // Open the filtered executor sheet so the user explicitly picks
+    // who handles this work. Same UX as team mode's picker but with
+    // a curated roster (self + just-added members + + नया जोड़ें).
     showToast(`${name} टीम में जुड़ गए`);
+    openPicker();
   });
-
-  function appendMemberToPicker(name) {
-    // Avoid duplicates
-    const exists = Array.from(sheetPicker.querySelectorAll('.exec-row .name'))
-      .some(el => el.textContent.trim() === name);
-    if (exists) return;
-    const sheetBody = sheetPicker.querySelector('.sheet-body');
-    const initial = name.charAt(0).toUpperCase();
-    const row = document.createElement('div');
-    row.className = 'exec-row';
-    row.dataset.pick = name.toLowerCase();
-    row.innerHTML = `
-      <div class="avatar">${initial}</div>
-      <div class="name">${name}</div>
-      <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-    `;
-    row.addEventListener('click', () => {
-      hideAllSheets();
-      state = 'team';
-      render();
-      scrollBodyToTop();
-      showToast(`${name} को भेजा गया`);
-    });
-    sheetBody.appendChild(row);
-  }
 
   function scrollBodyToTop() {
     // Mirrors RestoreDrilldownContent's LaunchedEffect: after a state morph
@@ -1053,8 +1007,80 @@
   }
   function openPicker() {
     hideAllSheets();
+    renderPickerBody();
     scrim.classList.add('visible');
     sheetPicker.classList.add('visible');
+  }
+
+  // Dynamic roster for the picker sheet.
+  //   Solo CSP: self + members the user added in this session + "+ नया जोड़ें".
+  //   Team CSP: self + full backend roster (Binod/Suresh/Rakesh in prototype)
+  //             + "+ नया जोड़ें".
+  // This mirrors the Compose TaskDrilldownScreen filter logic — solo CSPs
+  // never see backend roster members they didn't personally add.
+  function renderPickerBody() {
+    const body = document.getElementById('pickerBody');
+    const subtitle = document.getElementById('pickerSubtitle');
+    subtitle.textContent = cspMode === 'solo'
+      ? 'अपने आप करेंगे या जोड़े हुए मेम्बर को भेजेंगे?'
+      : 'अपने आप करेंगे या टीम मेम्बर भेजेंगे?';
+
+    const teamRoster = cspMode === 'solo'
+      ? addedMembers.map(m => m.name)
+      : ['Binod', 'Suresh', 'Rakesh', ...addedMembers.map(m => m.name)];
+
+    const rows = [];
+    // Self always first
+    rows.push(`
+      <div class="exec-row self-row" data-pick="self">
+        <div class="avatar">मैं</div>
+        <div class="name">मैं खुद करूँगा</div>
+        <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    `);
+    teamRoster.forEach(name => {
+      const initial = name.charAt(0).toUpperCase();
+      rows.push(`
+        <div class="exec-row" data-pick="${name.toLowerCase()}">
+          <div class="avatar">${initial}</div>
+          <div class="name">${name}</div>
+          <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      `);
+    });
+    // + नया जोड़ें affordance at the bottom of the sheet
+    rows.push(`
+      <div class="exec-row" id="pickerAddNew" style="color:var(--brand-primary);">
+        <div class="avatar" style="background:var(--bg-brand-subtle);color:var(--brand-primary);font-weight:700;">+</div>
+        <div class="name" style="color:var(--brand-primary);font-weight:600;">नया जोड़ें</div>
+      </div>
+    `);
+    body.innerHTML = rows.join('');
+
+    // Wire the picks
+    body.querySelectorAll('[data-pick]').forEach(row => {
+      row.addEventListener('click', () => {
+        const who = row.dataset.pick;
+        hideAllSheets();
+        if (who === 'self') {
+          state = 'self';
+          render();
+          scrollBodyToTop();
+          showToast('मैंने यह काम लिया');
+        } else {
+          state = 'team';
+          const name = row.querySelector('.name').textContent;
+          render();
+          scrollBodyToTop();
+          showToast(`${name} को भेजा गया`);
+        }
+      });
+    });
+    // "+ नया जोड़ें" launches the AddPage; on save it re-opens this picker
+    document.getElementById('pickerAddNew').addEventListener('click', () => {
+      hideAllSheets();
+      openAddPage();
+    });
   }
   function openResolve(variant) {
     hideAllSheets();
@@ -1078,25 +1104,8 @@
   // Scrim tap dismisses sheets
   scrim.addEventListener('click', hideAllSheets);
 
-  // Executor sheet picks
-  sheetPicker.querySelectorAll('[data-pick]').forEach(row => {
-    row.addEventListener('click', () => {
-      const who = row.dataset.pick;
-      hideAllSheets();
-      if (who === 'self') {
-        state = 'self';
-        render();
-        scrollBodyToTop();
-        showToast('मैंने यह काम लिया');
-      } else {
-        state = 'team';
-        const name = row.querySelector('.name').textContent;
-        render();
-        scrollBodyToTop();
-        showToast(`${name} को भेजा गया`);
-      }
-    });
-  });
+  // Picker rows are wired inside renderPickerBody() at sheet-open time —
+  // can't bind here at module load because the rows don't exist yet.
 
   // Resolve sheet CTA → toast + reset to pending
   resolveYes.addEventListener('click', () => {
